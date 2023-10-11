@@ -8,7 +8,6 @@ import {nanoid} from 'nanoid';
 
 import {Action} from './actions/action.js';
 import {ActionInstance} from './actions/action_instance.js';
-import {ActionInstanceInfo} from './actions/action_instance_info.js';
 import {ActionInstanceState} from './actions/action_instance_state.js';
 import {Arg} from './arg.js';
 
@@ -118,20 +117,20 @@ export class Bot {
    * @param id The id of the job.
    * @returns The job.
    */
-  getJobInfo(id: string): ActionInstanceInfo|undefined {
+  getJob(id: string): ActionInstance|undefined {
     if (!(id in this.jobs)) {
       return undefined;
     }
 
-    return this.jobs[id].info;
+    return this.jobs[id];
   }
 
   /**
    * Get information of all jobs from the bot.
    * @returns All jobs.
    */
-  getJobsInfo(): ReadonlyArray<ActionInstanceInfo> {
-    return Object.values(this.jobs).map((job) => job.info);
+  getJobs(): ReadonlyArray<ActionInstance> {
+    return Object.values(this.jobs);
   }
 
   /**
@@ -146,68 +145,6 @@ export class Bot {
     }
 
     return false;
-  }
-
-  /**
-   * Pauses a job.
-   * @param id The id of the job.
-   */
-  async pauseJob(id: string): Promise<void> {
-    if (!(id in this.jobs)) {
-      throw new Error(`job ${id} does not exist`);
-    }
-
-    if (this.jobs[id].state !== ActionInstanceState.RUNNING) {
-      throw new Error(`job ${id} is not running`);
-    }
-
-    await this.jobs[id].pause();
-  }
-
-  /**
-   * Resumes a job.
-   * @param id The id of the job.
-   */
-  async resumeJob(id: string): Promise<void> {
-    if (!(id in this.jobs)) {
-      throw new Error(`job ${id} does not exist`);
-    }
-
-    if (this.jobs[id].state !== ActionInstanceState.PAUSED) {
-      throw new Error(`job ${id} is not paused`);
-    }
-
-    for (const job of Object.values(this.jobs)) {
-      if (job.state === ActionInstanceState.RUNNING) {
-        throw new Error(`job ${id} cannot be started because job ${
-            job.id} is already running`);
-      }
-    }
-
-    await this.jobs[id].resume();
-  }
-
-  /**
-   * Starts a job.
-   * @param id The id of the action.
-   */
-  async startJob(id: string): Promise<void> {
-    if (!(id in this.jobs)) {
-      throw new Error(`job ${id} does not exist`);
-    }
-
-    if (this.jobs[id].state !== ActionInstanceState.READY) {
-      throw new Error(`job ${id} is not ready`);
-    }
-
-    for (const job of Object.values(this.jobs)) {
-      if (job.state === ActionInstanceState.RUNNING) {
-        throw new Error(`job ${id} cannot be started because job ${
-            job.id} is already running`);
-      }
-    }
-
-    await this.jobs[id].start();
   }
 
   private createMineflayerBot(

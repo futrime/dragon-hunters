@@ -95,7 +95,7 @@ router.route('/').post((req, res) => {
         id: id,
         action: data.data.action,
         args: data.data.args,
-        state: bot.getJobInfo(id)?.state,
+        state: bot.getJob(id)?.state,
       },
     });
   } catch (error) {
@@ -121,8 +121,8 @@ router.route('/:jobID/:operation')
               const bot: Bot = req.app.locals.bot;
 
               // Find job according to its id
-              const jobsInfo = bot.getJobInfo(jobID);
-              if (jobsInfo === undefined) {
+              const job = bot.getJob(jobID);
+              if (job === undefined) {
                 return res.status(400).send({
                   apiVersion: '0.0.0',
                   error: {
@@ -134,16 +134,16 @@ router.route('/:jobID/:operation')
 
               switch (operation) {
                 case 'start':
-                  await bot.startJob(jobID);
+                  await job.start();
                   break;
                 case 'pause':
-                  await bot.pauseJob(jobID);
+                  await job.pause();
                   break;
                 case 'resume':
-                  await bot.resumeJob(jobID);
+                  await job.resume();
                   break;
                 case 'cancel':
-                  await bot.cancelJob(jobID);
+                  await job.cancel();
                   break;
                 default:
                   return res.status(400).send({
@@ -177,12 +177,12 @@ router.route('/').get((req, res) => {
   try {
     const bot: Bot = req.app.locals.bot;
 
-    const jobsInfo = bot.getJobsInfo();
+    const jobs = bot.getJobs();
 
     return res.status(200).send({
       apiVersion: '0.0.0',
       data: {
-        items: jobsInfo.map((jobInfo) => {
+        items: jobs.map((jobInfo) => {
           return {
             id: jobInfo.id,
             action: jobInfo.actionName,

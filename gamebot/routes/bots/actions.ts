@@ -115,7 +115,7 @@ router.route("/").post((req, res) => {
       data.data.description,
       data.data.parameters,
       program
-    ); // TODO: params
+    );
 
     bot.addAction(action);
 
@@ -152,7 +152,6 @@ router.route("/").get((req, res) => {
           return {
             name: action.name,
             description: action.description,
-            // TODO: params
             parameters: Object.values(action.parameters),
           };
         }),

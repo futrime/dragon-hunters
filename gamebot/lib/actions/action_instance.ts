@@ -3,7 +3,6 @@ import EventEmitter from 'events';
 import {Arg, isArgArrayDuplicate} from '../arg.js'
 import {Bot} from '../bot.js';
 
-import {ActionInstanceInfo} from './action_instance_info.js';
 import {ActionInstanceState} from './action_instance_state.js';
 
 export abstract class ActionInstance {
@@ -44,15 +43,6 @@ export abstract class ActionInstance {
    * Starts the action instance.
    */
   abstract start(): Promise<void>;
-
-  get info(): ActionInstanceInfo {
-    return {
-      args: this.args,
-      actionName: this.actionName,
-      id: this.id,
-      state: this.state,
-    };
-  }
 
   get state(): ActionInstanceState {
     return this.wrappedState;
