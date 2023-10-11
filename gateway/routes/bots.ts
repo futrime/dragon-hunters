@@ -3,7 +3,6 @@ import Ajv from 'ajv';
 import assert from 'assert';
 import consola from 'consola';
 import express, {RequestHandler} from 'express';
-import path from 'path';
 
 import {Bot} from '../lib/bot.js';
 
@@ -168,9 +167,7 @@ router.route('/:username/*')
                  requestHeaders.set(key, value?.toString() ?? '');
                }
 
-               const url = path.join(
-                   `http://${bot.ip}:${bot.port}/api/bots/${bot.username}`,
-                   req.params[0]);
+               const url = `http://${bot.ip}:${bot.port}/api/bots/${bot.username}/${req.params[0]}`;
 
                const response = await fetch(url, {
                  headers: requestHeaders,
