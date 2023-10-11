@@ -1,0 +1,41 @@
+services:
+  gateway:
+    build: ./gateway
+    environment:
+      LISTEN_PORT: 8080
+    ports:
+      - 8080:8080
+    restart: always
+
+  gamebot:
+    build: ./gamebot
+    depends_on:
+      - gateway
+      - mcserver
+    deploy:
+      replicas: ${GAMEBOT_REPLICAS}
+    environment:
+      GATEWAY_HOST: gateway
+      GATEWAY_PORT: 8080
+      LISTEN_PORT: 8080
+      MCSERVER_HOST: mcserver
+      MCSERVER_PORT: 25565
+      MCSERVER_VERSION: ${MCSERVER_VERSION}
+    restart: always
+
+  mcserver:
+    environment:
+      EULA: TRUE
+      MAX_PLAYERS: 20
+      ONLINE_MODE: FALSE
+      SERVER_PORT: 25565
+      VERSION: ${MCSERVER_VERSION}
+    image: itzg/minecraft-server
+    ports:
+      - 25565:25565
+    restart: always
+    volumes:
+      - mcserver:/data
+
+volumes:
+  mcserver:
