@@ -1,0 +1,2 @@
+class DragonHunters:
+    pass

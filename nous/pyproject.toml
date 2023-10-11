@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "dragon-hunters-nous"
+version = "0.0.0"
+description = ""
+authors = ["Zijian Zhang <futrime@outlook.com>"]
+readme = "README.md"
+packages = [{include = "dragon_hunters"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
