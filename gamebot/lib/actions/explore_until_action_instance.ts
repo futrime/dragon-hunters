@@ -44,6 +44,7 @@ export class ExploreUntilActionInstance extends PredefinedActionInstance {
   private readonly timeout: number;
 
   private currentActionInstance?: ActionInstance = undefined;
+  private timer?: NodeJS.Timeout = undefined;
 
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
@@ -77,6 +78,10 @@ export class ExploreUntilActionInstance extends PredefinedActionInstance {
       throw new Error(
           `cannot cancel an action instance in state ${this.wrappedState}`);
     }
+
+    assert.notStrictEqual(
+        this.timer, undefined, 'timer should not be empty here');
+    clearTimeout(this.timer);
 
     // this.currentActionInstance should never be undefined
     assert.notStrictEqual(
@@ -152,9 +157,49 @@ export class ExploreUntilActionInstance extends PredefinedActionInstance {
 
     this.run().catch(this.handleRunError.bind(this));
 
+    assert.strictEqual(
+        this.timer, undefined,
+        'timer should be undefined before starting the action instance');
+
+    this.timer = setTimeout(
+        this.cancelCurrentActionInstance.bind(this) as (() => void),
+        this.timeout);
+
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('start', this);
     consola.log(`${this.actionName}#${this.id} started`);
+  }
+
+  private async cancelCurrentActionInstance() {
+    // this.currentActionInstance should never be undefined
+    assert.notStrictEqual(
+        this.currentActionInstance, undefined,
+        'currentActionInstance should not be undefined');
+
+    // Wait till RUNNING if READY
+    if (this.currentActionInstance!.state === ActionInstanceState.READY) {
+      await pWaitFor(
+          () => this.currentActionInstance!.state ===
+              ActionInstanceState.RUNNING);
+    }
+
+    if (this.currentActionInstance!.state === ActionInstanceState.RUNNING ||
+        this.currentActionInstance!.state === ActionInstanceState.PAUSED) {
+      await this.currentActionInstance!.cancel();
+    }
+  }
+
+  private async handleRunError(error: Error) {
+    if (this.currentActionInstance !== undefined &&
+        (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
+         this.currentActionInstance.state === ActionInstanceState.PAUSED)) {
+      // Ignore error
+      await this.currentActionInstance.cancel().catch(() => {});
+    }
+
+    this.wrappedState = ActionInstanceState.FAILED;
+    this.eventEmitter.emit('fail', this, error.message);
+    consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
   }
 
   private async run() {
@@ -184,26 +229,17 @@ export class ExploreUntilActionInstance extends PredefinedActionInstance {
       this.currentActionInstance = undefined;
     }
 
+    assert.notStrictEqual(
+        this.timer, undefined, 'timer should not be empty here');
+    clearTimeout(this.timer);
+
     this.wrappedState = ActionInstanceState.SUCCEEDED;
     this.eventEmitter.emit('succeed', this);
     consola.log(`${this.actionName}#${this.id} succeeded`);
   }
 
-  private async handleRunError(error: Error) {
-    if (this.currentActionInstance !== undefined &&
-        (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
-         this.currentActionInstance.state === ActionInstanceState.PAUSED)) {
-      // Ignore error
-      await this.currentActionInstance.cancel().catch(() => {});
-    }
-
-    this.wrappedState = ActionInstanceState.FAILED;
-    this.eventEmitter.emit('fail', this, error.message);
-    consola.error(`${this.actionName}#${this.id} failed: ${error.message}`);
-  }
-
   private async waitTillActionInstanceEnd(actionInstance: ActionInstance) {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       actionInstance.eventEmitter.once('cancel', () => {
         resolve();
       });
@@ -213,8 +249,16 @@ export class ExploreUntilActionInstance extends PredefinedActionInstance {
       });
 
       actionInstance.eventEmitter.once('fail', (_, reason: string) => {
-        reject(
-            new Error(`action ${actionInstance.actionName} failed: ${reason}`));
+        assert.notStrictEqual(
+            this.timer, undefined, 'timer should not be empty here');
+        clearTimeout(this.timer);
+
+        this.wrappedState = ActionInstanceState.FAILED;
+        this.eventEmitter.emit('fail', this, reason);
+        consola.log(`${this.actionName}#${this.id} failed: ${
+            actionInstance.actionName} failed: ${reason}`);
+
+        resolve();
       });
     });
   }
