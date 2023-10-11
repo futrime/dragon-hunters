@@ -122,6 +122,8 @@ router.route("/").post((req, res) => {
     updated = currentTime;
 
     return res.status(201).end();
+
+    
   } catch (error) {
     assert(error instanceof Error);
 
@@ -151,7 +153,7 @@ router.route("/").get((req, res) => {
             name: action.name,
             description: action.description,
             // TODO: params
-            parameters: action.parameters,
+            parameters: Object.values(action.parameters),
           };
         }),
       },
