@@ -1,20 +1,14 @@
-import Ajv from "ajv";
-import assert from "assert";
-import consola from "consola";
-import express from "express";
+import Ajv from 'ajv';
+import assert from 'assert';
+import consola from 'consola';
+import express from 'express';
 
-import { Bot } from "../../lib/bot.js";
-
-// import {  } from "../../lib/actions/program_action";
+import {Bot} from '../../lib/bot.js';
 
 export const router = express.Router();
 
-let updated = new Date();
-
-router.route("/").post((req, res) => {
+router.route('/').post((req, res) => {
   try {
-    const currentTime = new Date();
-
     const bot: Bot = req.app.locals.bot;
 
     let responseJson: unknown;
@@ -24,7 +18,7 @@ router.route("/").post((req, res) => {
       assert(error instanceof Error);
 
       return res.status(400).send({
-        apiVersion: "0.0.0",
+        apiVersion: '0.0.0',
         error: {
           code: 400,
           message: `Request body is not valid JSON.`,
@@ -33,45 +27,45 @@ router.route("/").post((req, res) => {
     }
 
     const SCHEMA = {
-      type: "object",
+      type: 'object',
       properties: {
         apiVersion: {
-          type: "string",
+          type: 'string',
         },
         data: {
-          type: "object",
+          type: 'object',
           properties: {
             action: {
-              type: "string",
+              type: 'string',
             },
             args: {
-              type: "array",
+              type: 'array',
               items: {
-                type: "object",
+                type: 'object',
                 properties: {
                   name: {
-                    type: "string",
+                    type: 'string',
                   },
                   value: {
                     type: [
-                      "string",
-                      "integer",
-                      "boolean",
-                      "array",
-                      "object",
-                      "number",
-                      "null",
+                      'string',
+                      'integer',
+                      'boolean',
+                      'array',
+                      'object',
+                      'number',
+                      'null',
                     ],
                   },
                 },
-                required: ["name", "value"],
+                required: ['name', 'value'],
               },
             },
           },
-          required: ["action", "args"],
+          required: ['action', 'args'],
         },
       },
-      required: ["apiVersion", "data"],
+      required: ['apiVersion', 'data'],
     };
 
     const ajv = new Ajv();
@@ -79,7 +73,7 @@ router.route("/").post((req, res) => {
     const valid = validate(responseJson);
     if (!valid) {
       return res.status(400).send({
-        apiVersion: "0.0.0",
+        apiVersion: '0.0.0',
         error: {
           code: 400,
           message: `The request is invalid:
@@ -90,21 +84,13 @@ router.route("/").post((req, res) => {
 
     const data = responseJson as {
       apiVersion: string;
-      data: {
-        action: string;
-        args: {
-          name: string;
-          value: string | Number | boolean | Array<any> | object | null;
-        }[];
-      };
+      data: {action: string; args: {name: string; value: unknown;}[];};
     };
 
     const id = bot.createJob(data.data.action, data.data.args);
 
-    updated = currentTime;
-
     return res.status(201).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       data: {
         id: id,
         action: data.data.action,
@@ -117,7 +103,7 @@ router.route("/").post((req, res) => {
 
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured.`,
@@ -126,78 +112,75 @@ router.route("/").post((req, res) => {
   }
 });
 
-router.route("/:jobID/:operation").post((req, res) => {
-  try {
-    const currentTime = new Date();
+router.route('/:jobID/:operation')
+    .post((async (req, res) => {
+            try {
+              const jobID = req.params.jobID;
+              const operation = req.params.operation;
 
-    const jobID = req.params.jobID;
-    const operation = req.params.operation;
+              const bot: Bot = req.app.locals.bot;
 
-    const bot: Bot = req.app.locals.bot;
+              // Find job according to its id
+              const jobsInfo = bot.getJobInfo(jobID);
+              if (jobsInfo === undefined) {
+                return res.status(400).send({
+                  apiVersion: '0.0.0',
+                  error: {
+                    code: 400,
+                    message: `Job ID not found!`,
+                  },
+                });
+              }
 
-    // Find job according to its id
-    let jobsInfo = bot.getJobInfo(jobID);
-    if (jobsInfo === undefined) {
-      return res.status(400).send({
-        apiVersion: "0.0.0",
-        error: {
-          code: 400,
-          message: `Job ID not found!`,
-        },
-      });
-    }
+              switch (operation) {
+                case 'start':
+                  await bot.startJob(jobID);
+                  break;
+                case 'pause':
+                  await bot.pauseJob(jobID);
+                  break;
+                case 'resume':
+                  await bot.resumeJob(jobID);
+                  break;
+                case 'cancel':
+                  await bot.cancelJob(jobID);
+                  break;
+                default:
+                  return res.status(400).send({
+                    apiVersion: '0.0.0',
+                    error: {
+                      code: 400,
+                      message: `Invalid job operation.`,
+                    },
+                  });
+              }
 
-    switch (operation) {
-      case "start":
-        bot.startJob(jobID);
-        break;
-      case "pause":
-        bot.pauseJob(jobID);
-        break;
-      case "resume":
-        bot.resumeJob(jobID);
-        break;
-      case "cancel":
-        bot.cancelJob(jobID);
-        break;
-      default:
-        return res.status(400).send({
-          apiVersion: "0.0.0",
-          error: {
-            code: 400,
-            message: `Invalid job operation.`,
-          },
-        });
-    }
+              return res.status(200).send({
+                apiVersion: '0.0.0',
+                data: {},
+              });
+            } catch (error) {
+              assert(error instanceof Error);
 
-    updated = currentTime;
+              consola.error(`Error: ${error.message}`);
+              return res.status(500).send({
+                apiVersion: '0.0.0',
+                error: {
+                  code: 500,
+                  message: `Internal server error occured.`,
+                },
+              });
+            }
+          }) as express.RequestHandler);
 
-    return res.status(200).send({
-      apiVersion: "0.0.0",
-      data: {},
-    });
-  } catch (error) {
-    assert(error instanceof Error);
-
-    consola.error(`Error: ${error.message}`);
-    return res.status(500).send({
-      apiVersion: "0.0.0",
-      error: {
-        code: 500,
-        message: `Internal server error occured.`,
-      },
-    });
-  }
-});
-
-router.route("/").get((req, res) => {
+router.route('/').get((req, res) => {
   try {
     const bot: Bot = req.app.locals.bot;
 
     const jobsInfo = bot.getJobsInfo();
 
     return res.status(200).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       data: {
         items: jobsInfo.map((jobInfo) => {
           return {
@@ -214,7 +197,7 @@ router.route("/").get((req, res) => {
 
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured.`,
