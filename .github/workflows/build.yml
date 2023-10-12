@@ -3,12 +3,12 @@ on:
   push:
     paths:
       - .github/workflows/build.yml
-      - gamebot
-      - gateway
+      - bot
+      - registry
   workflow_dispatch:
 
 jobs:
-  build_gamebot:
+  build_bot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,18 +19,18 @@ jobs:
 
       - run: |
           npm ci
-        working-directory: gamebot
+        working-directory: bot
 
       - run: |
           npm run build
-        working-directory: gamebot
+        working-directory: bot
 
       - uses: actions/upload-artifact@v3
         with:
-          name: dragon-hunters-gamebot-${{ github.sha }}
-          path: gamebot/dist
+          name: dragon-hunters-bot-${{ github.sha }}
+          path: bot/dist
 
-  build_gateway:
+  build_registry:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,13 +41,13 @@ jobs:
 
       - run: |
           npm ci
-        working-directory: gateway
+        working-directory: registry
 
       - run: |
           npm run build
-        working-directory: gateway
+        working-directory: registry
 
       - uses: actions/upload-artifact@v3
         with:
-          name: dragon-hunters-gateway-${{ github.sha }}
-          path: gateway/dist
+          name: dragon-hunters-registry-${{ github.sha }}
+          path: registry/dist

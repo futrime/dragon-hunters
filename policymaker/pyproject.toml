@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "dragon-hunters"
+name = "dragon-hunters-policymaker"
 version = "0.0.0"
 description = ""
 authors = ["Futrime <futrime@outlook.com>"]
 readme = "README.md"
-packages = [{include = "dragon_hunters"}]
+packages = [{include = "policymaker"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
