@@ -23,25 +23,27 @@ main().catch((error) => {
 
 async function main() {
   // Read environment variables.
-  const gateway_host = process.env.GATEWAY_HOST ?? '127.0.0.1';
-  const gateway_port = parseInt(process.env.GATEWAY_PORT ?? '8080');
-  const listen_port = parseInt(process.env.LISTEN_PORT ?? '8080');
+  const listen_port = parseInt(process.env.LISTEN_PORT ?? '8081');
   const log_level = parseInt(process.env.LOG_LEVEL ?? '3');
   const mcserver_host = process.env.MCSERVER_HOST ?? '127.0.0.1';
   const mcserver_port = parseInt(process.env.MCSERVER_PORT ?? '25565');
   const mcserver_version = process.env.MCSERVER_VERSION ?? '1.20.1';
+  const registry_address =
+      process.env.REGISTRY_ADDRESS ?? 'http://127.0.0.1:8080';
+  let username = process.env.USERNAME ?? undefined;
 
   // Set up logging.
   consola.level = log_level;
 
-  // Register the bot on the gateway.
-  consola.log('registering bot...');
-  const {username} =
-      await registerBot(listen_port, gateway_host, gateway_port)
-          .catch((error) => {
-            throw new Error(`failed to register bot: ${error.message}`);
-          });
-  consola.log(`registered bot as ${username}`);
+  if (username === undefined) {
+    // Register the bot on the registry.
+    consola.log('registering bot...');
+    username =
+        (await registerBot(listen_port, registry_address).catch((error) => {
+          throw new Error(`failed to register bot: ${error.message}`);
+        })).username;
+    consola.log(`registered bot as ${username}`);
+  }
 
   // Create the bot.
   const bot = new Bot(mcserver_host, mcserver_port, username, mcserver_version);
@@ -55,29 +57,27 @@ async function main() {
   });
 }
 
-async function registerBot(
-    listen_port: number, gateway_host: string,
-    gateway_port: number): Promise<{username: string}> {
-  const response =
-      await fetch(`http://${gateway_host}:${gateway_port}/api/bots`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiVersion: '0.0.0',
-          data: {
-            port: listen_port,
-          },
-        }),
-      }).catch((error) => {
-        throw new Error(`failed to fetch http://${gateway_host}:${
-            gateway_port}/api/bots: ${error.message}`);
-      });
+async function registerBot(listen_port: number, registry_address: string):
+    Promise<{username: string}> {
+  const response = await fetch(`${registry_address}/api/bots`, {
+                     method: 'POST',
+                     headers: {
+                       'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify({
+                       apiVersion: '0.0.0',
+                       data: {
+                         port: listen_port,
+                       },
+                     }),
+                   }).catch((error) => {
+    throw new Error(
+        `failed to fetch ${registry_address}/api/bots: ${error.message}`);
+  });
 
   if (response.status !== 201) {
-    throw new Error(`failed to fetch http://${gateway_host}:${
-        gateway_port}/api/bots:  ${response.status} ${response.statusText}`);
+    throw new Error(`failed to fetch ${registry_address}/api/bots:  ${
+        response.status} ${response.statusText}`);
   }
 
   const responseJson = await response.json().catch((error) => {
@@ -101,8 +101,8 @@ async function registerBot(
   const validate = ajv.compile(SCHEMA);
   const valid = validate(responseJson);
   if (valid !== true) {
-    throw new Error(`got invalid response fetching http://${gateway_host}:${
-        gateway_port}/api/bots: ${ajv.errorsText(validate.errors)}`);
+    throw new Error(`got invalid response fetching ${
+        registry_address}/api/bots: ${ajv.errorsText(validate.errors)}`);
   }
 
   const parsedResponse = responseJson as {

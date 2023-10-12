@@ -17,9 +17,9 @@ main().catch((error) => {
 
 async function main() {
   // Read environment variables.
+  const faker_seed = parseInt(process.env.FAKER_SEED ?? '114514');
   const listen_port = parseInt(process.env.LISTEN_PORT ?? '8080');
   const log_level = parseInt(process.env.LOG_LEVEL ?? '3');
-  const faker_seed = parseInt(process.env.FAKER_SEED ?? '114514');
 
   // Set up logging.
   consola.level = log_level
@@ -37,7 +37,7 @@ async function main() {
 /**
  * Sets up express.
  * @param bots The bots.
- * @param listen_port The port of the gateway.
+ * @param listen_port The port of the registry.
  * @returns The express app.
  */
 function setupExpress(bots: Bot[], listen_port: number): express.Express {
