@@ -121,10 +121,10 @@ async function setupExpress(
                   .use(morgan('tiny'))
                   .use(cors())
                   .use(express.raw({type: '*/*'}))
-                  .use(`/api/bots/${bot.name}/observe`, routerBotsObserve)
-                  .use(`/api/bots/${bot.name}/status`, routerBotsStatus)
-                  .use(`/api/bots/${bot.name}/actions`, routerBotsActions)
-                  .use(`/api/bots/${bot.name}/jobs`, routerBotsJobs)
+                  .use(`/api/observe`, routerBotsObserve)
+                  .use(`/api/status`, routerBotsStatus)
+                  .use(`/api/actions`, routerBotsActions)
+                  .use(`/api/jobs`, routerBotsJobs)
                   .use((_, res) => {
                     return res.status(404).send({
                       apiVersion: '0.0.0',
