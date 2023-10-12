@@ -1,6 +1,6 @@
 import asyncio
 
-from .dragon_hunters import DragonHunters
+from dragon_hunters import DragonHunters
 
 
 async def main():
