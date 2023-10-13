@@ -150,7 +150,7 @@ export class Bot {
              for (const job of Object.values(this.jobs)) {
                if (job.state === ActionInstanceState.RUNNING ||
                    job.state === ActionInstanceState.PAUSED) {
-                 job.cancel();
+                 await job.cancel();
                }
              }
 

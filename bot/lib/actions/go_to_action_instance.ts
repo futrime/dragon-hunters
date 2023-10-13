@@ -34,6 +34,9 @@ export class GoToActionInstance extends PredefinedActionInstance {
   private readonly y: number;
   private readonly z: number;
 
+  private handleGoalReachedBound?: () => Promise<void>;
+  private handlePathUpdateBound?: (result: {status: string}) => Promise<void>;
+
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
 
@@ -145,19 +148,32 @@ export class GoToActionInstance extends PredefinedActionInstance {
 
 
   private async startPathfinding(): Promise<void> {
+    if (this.handleGoalReachedBound !== undefined ||
+        this.handlePathUpdateBound !== undefined) {
+      throw new Error('pathfinding already started');
+    }
+
     const goal = new pathfinderModule.goals.GoalBlock(this.x, this.y, this.z);
     this.bot.mineflayerBot.pathfinder.setGoal(goal);
 
-    this.bot.mineflayerBot.once(
-        'goal_reached', this.handleGoalReached.bind(this));
-    this.bot.mineflayerBot.once(
-        'path_update', this.handlePathUpdate.bind(this));
+    this.handleGoalReachedBound = this.handleGoalReached.bind(this);
+    this.handlePathUpdateBound = this.handlePathUpdate.bind(this);
+
+    this.bot.mineflayerBot.once('goal_reached', this.handleGoalReachedBound);
+    this.bot.mineflayerBot.once('path_update', this.handlePathUpdateBound);
   }
 
   private async stopPathfinding(): Promise<void> {
-    this.bot.mineflayerBot.off(
-        'goal_reached', this.handleGoalReached.bind(this));
-    this.bot.mineflayerBot.off('path_update', this.handlePathUpdate.bind(this));
+    if (this.handleGoalReachedBound === undefined ||
+        this.handlePathUpdateBound === undefined) {
+      throw new Error('pathfinding not started');
+    }
+
+    this.bot.mineflayerBot.off('goal_reached', this.handleGoalReachedBound);
+    this.bot.mineflayerBot.off('path_update', this.handlePathUpdateBound);
+
+    this.handleGoalReachedBound = undefined;
+    this.handlePathUpdateBound = undefined;
 
     this.bot.mineflayerBot.pathfinder.setGoal(null);
   }
