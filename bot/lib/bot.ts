@@ -53,23 +53,6 @@ export class Bot {
   }
 
   /**
-   * Cancels a job.
-   * @param id The id of the job.
-   */
-  async cancelJob(id: string): Promise<void> {
-    if (!(id in this.jobs)) {
-      throw new Error(`job ${id} does not exist`);
-    }
-
-    if (this.jobs[id].state !== ActionInstanceState.RUNNING &&
-        this.jobs[id].state !== ActionInstanceState.PAUSED) {
-      throw new Error(`job ${id} is not running`);
-    }
-
-    await this.jobs[id].cancel();
-  }
-
-  /**
    * Creates a job.
    * @param action The action to create a job from.
    * @param args The arguments to pass to the action.
@@ -163,6 +146,14 @@ export class Bot {
     bot.loadPlugin(pvp.plugin);
 
     bot.on('end', (async () => {
+             consola.log(`canceling all jobs...`);
+             for (const job of Object.values(this.jobs)) {
+               if (job.state === ActionInstanceState.RUNNING ||
+                   job.state === ActionInstanceState.PAUSED) {
+                 job.cancel();
+               }
+             }
+
              consola.log(`bot ended, restarting in 5 seconds...`);
              await new Promise((resolve) => setTimeout(resolve, 5000));
 
@@ -173,7 +164,7 @@ export class Bot {
       consola.error(`bot error: ${error.message}`);
     });
     bot.on('login', () => {
-      consola.log('bot logged in');
+      consola.log(`bot logged in as ${bot.username}`);
     });
 
     return bot;

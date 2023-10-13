@@ -23,14 +23,14 @@ main().catch((error) => {
 
 async function main() {
   // Read environment variables.
-  const listen_port = parseInt(process.env.LISTEN_PORT ?? '8081');
+  let bot_username = process.env.BOT_USERNAME ?? 'Unnamed';
+  const listen_port = parseInt(process.env.LISTEN_PORT ?? '8080');
   const log_level = parseInt(process.env.LOG_LEVEL ?? '3');
   const mcserver_host = process.env.MCSERVER_HOST ?? '127.0.0.1';
   const mcserver_port = parseInt(process.env.MCSERVER_PORT ?? '25565');
   const mcserver_version = process.env.MCSERVER_VERSION ?? '1.20.1';
   const registry_address =
       process.env.REGISTRY_ADDRESS ?? undefined;
-  let username = process.env.USERNAME ?? 'Unnamed';
 
   // Set up logging.
   consola.level = log_level;
@@ -38,15 +38,15 @@ async function main() {
   if (registry_address !== undefined) {
     // Register the bot on the registry.
     consola.log('registering bot...');
-    username =
+    bot_username =
         (await registerBot(listen_port, registry_address).catch((error) => {
           throw new Error(`failed to register bot: ${error.message}`);
         })).username;
-    consola.log(`registered bot as ${username}`);
+    consola.log(`registered bot as ${bot_username}`);
   }
 
   // Create the bot.
-  const bot = new Bot(mcserver_host, mcserver_port, username, mcserver_version);
+  const bot = new Bot(mcserver_host, mcserver_port, bot_username, mcserver_version);
 
   // Set up predefined actions.
   setupPredefinedActions(bot);
