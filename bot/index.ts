@@ -29,13 +29,13 @@ async function main() {
   const mcserver_port = parseInt(process.env.MCSERVER_PORT ?? '25565');
   const mcserver_version = process.env.MCSERVER_VERSION ?? '1.20.1';
   const registry_address =
-      process.env.REGISTRY_ADDRESS ?? 'http://127.0.0.1:8080';
-  let username = process.env.USERNAME ?? undefined;
+      process.env.REGISTRY_ADDRESS ?? undefined;
+  let username = process.env.USERNAME ?? 'Unnamed';
 
   // Set up logging.
   consola.level = log_level;
 
-  if (username === undefined) {
+  if (registry_address !== undefined) {
     // Register the bot on the registry.
     consola.log('registering bot...');
     username =
