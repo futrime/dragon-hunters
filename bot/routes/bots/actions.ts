@@ -1,17 +1,16 @@
-import Ajv from "ajv";
-import assert from "assert";
-import consola from "consola";
-import express from "express";
+import Ajv from 'ajv';
+import assert from 'assert';
+import consola from 'consola';
+import express from 'express';
 
-import { ProgramAction } from "../../lib/actions/program_action.js";
-import { Bot } from "../../lib/bot.js";
-import { createProgram } from "../../lib/programs/program_creation.js";
+import {ProgramAction} from '../../lib/actions/program_action.js';
+import {Bot} from '../../lib/bot.js';
 
 export const router = express.Router();
 
 let updated = new Date();
 
-router.route("/").post((req, res) => {
+router.route('/').post((req, res) => {
   try {
     const currentTime = new Date();
 
@@ -24,7 +23,7 @@ router.route("/").post((req, res) => {
       assert(error instanceof Error);
 
       return res.status(400).send({
-        apiVersion: "0.0.0",
+        apiVersion: '0.0.0',
         error: {
           code: 400,
           message: `Request body is not valid JSON.`,
@@ -33,50 +32,50 @@ router.route("/").post((req, res) => {
     }
 
     const SCHEMA = {
-      type: "object",
+      type: 'object',
       properties: {
         apiVersion: {
-          type: "string",
+          type: 'string',
         },
         data: {
-          type: "object",
+          type: 'object',
           properties: {
             name: {
-              type: "string",
+              type: 'string',
             },
             program: {
-              type: "object",
+              type: 'object',
               properties: {},
             },
             description: {
-              type: "string",
+              type: 'string',
             },
             parameters: {
-              type: "array",
+              type: 'array',
               items: {
-                type: "object",
+                type: 'object',
                 properties: {
                   name: {
-                    type: "string",
+                    type: 'string',
                   },
                   type: {
-                    type: "string",
+                    type: 'string',
                   },
                   description: {
-                    type: "string",
+                    type: 'string',
                   },
                   variable: {
-                    type: "string",
+                    type: 'string',
                   },
                 },
-                required: ["name", "variable", "type", "description"],
+                required: ['name', 'variable', 'type', 'description'],
               },
             },
           },
-          required: ["name", "parameters", "program", "description"],
+          required: ['name', 'parameters', 'program', 'description'],
         },
       },
-      required: ["apiVersion", "data"],
+      required: ['apiVersion', 'data'],
     };
 
     const ajv = new Ajv();
@@ -84,7 +83,7 @@ router.route("/").post((req, res) => {
     const valid = validate(responseJson);
     if (!valid) {
       return res.status(400).send({
-        apiVersion: "0.0.0",
+        apiVersion: '0.0.0',
         error: {
           code: 400,
           message: `The request is invalid:
@@ -96,26 +95,15 @@ router.route("/").post((req, res) => {
     const data = responseJson as {
       apiVersion: string;
       data: {
-        name: string;
-        program: object;
-        description: string;
-        parameters: {
-          name: string;
-          variable: string;
-          type: string;
-          description: string;
+        name: string; program: object; description: string; parameters: {
+          name: string; variable: string; type: string; description: string;
         }[];
       };
     };
 
-    const program = createProgram(data.data.program);
-
     const action = new ProgramAction(
-      data.data.name,
-      data.data.description,
-      data.data.parameters,
-      program
-    );
+        data.data.name, data.data.description, data.data.parameters,
+        data.data.program);
 
     bot.addAction(action);
 
@@ -123,13 +111,13 @@ router.route("/").post((req, res) => {
 
     return res.status(201).end();
 
-    
+
   } catch (error) {
     assert(error instanceof Error);
 
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured.`,
@@ -138,14 +126,14 @@ router.route("/").post((req, res) => {
   }
 });
 
-router.route("/").get((req, res) => {
+router.route('/').get((req, res) => {
   try {
     const bot: Bot = req.app.locals.bot;
 
     const actions = bot.getActions();
 
     return res.status(200).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       data: {
         updated: updated.toISOString(),
         items: actions.map((action) => {
@@ -162,7 +150,7 @@ router.route("/").get((req, res) => {
 
     consola.error(`Error: ${error.message}`);
     return res.status(500).send({
-      apiVersion: "0.0.0",
+      apiVersion: '0.0.0',
       error: {
         code: 500,
         message: `Internal server error occured.`,

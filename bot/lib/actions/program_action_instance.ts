@@ -7,20 +7,20 @@ import {Bot} from '../bot.js';
 import {doArgArrayMatchParameterArray, isParameterArrayDuplicate} from '../parameter.js';
 import {ActionInvocation} from '../programs/action_invocation.js';
 import {Program} from '../programs/program.js';
+import {createProgram} from '../programs/program_creation.js';
 
 import {ActionInstance} from './action_instance.js';
 import {ActionInstanceState} from './action_instance_state.js';
 import {ParameterWithVariable} from './parameter_with_variable.js';
 
 export class ProgramActionInstance extends ActionInstance {
-  private readonly variables: Record<string, unknown> = {};
+  private readonly program: Program;
 
   private currentActionInstance?: ActionInstance = undefined;
 
   constructor(
       id: string, args: ReadonlyArray<Arg>, bot: Bot, actionName: string,
-      parameters: ReadonlyArray<ParameterWithVariable>,
-      private readonly program: Program) {
+      parameters: ReadonlyArray<ParameterWithVariable>, programJson: object) {
     super(id, actionName, args, bot);
 
     if (isParameterArrayDuplicate(parameters) === false) {
@@ -32,14 +32,27 @@ export class ProgramActionInstance extends ActionInstance {
     }
 
     // Set variables
+    const variables: Record<string, unknown> = {};
     for (const parameter of parameters) {
       // Variable should start with $
       if (!parameter.variable.startsWith('$')) {
         throw new Error(`variable ${parameter.variable} should start with $`);
       }
 
-      this.variables[parameter.variable] = this.args[parameter.name].value;
+      variables[parameter.variable] = this.args[parameter.name].value;
     }
+
+    // Replace variables in programJson
+    const modifiedProgramJson =
+        JSON.parse(JSON.stringify(programJson, (_, value) => {
+          for (const variable of Object.keys(variables)) {
+            if (value === variable) {
+              return variables[variable];
+            }
+          }
+        }));
+
+    this.program = createProgram(modifiedProgramJson);
   }
 
   override async cancel(): Promise<void> {
@@ -135,20 +148,8 @@ export class ProgramActionInstance extends ActionInstance {
       throw new Error(`action ${actionInvocation.action} not found`);
     }
 
-    const args = actionInvocation.args.map((arg) => {
-      if (typeof arg.value === 'string' && arg.value.startsWith('$')) {
-        const value = this.variables[arg.value];
-
-        return {
-          ...arg,
-          value,
-        };
-      } else {
-        return arg;
-      }
-    });
-
-    const actionInstance = action.instantiate('', args, this.bot);
+    const actionInstance =
+        action.instantiate('', actionInvocation.args, this.bot);
 
     return actionInstance;
   }
