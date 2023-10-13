@@ -143,7 +143,7 @@ export class GoToActionInstance extends PredefinedActionInstance {
     this.wrappedState = ActionInstanceState.FAILED;
     this.eventEmitter.emit('fail', this, reason);
 
-    consola.log(`${this.actionName}#${this.id} failed`);
+    consola.log(`${this.actionName}#${this.id} failed: ${reason}`);
   }
 
 
@@ -159,8 +159,8 @@ export class GoToActionInstance extends PredefinedActionInstance {
     this.handleGoalReachedBound = this.handleGoalReached.bind(this);
     this.handlePathUpdateBound = this.handlePathUpdate.bind(this);
 
-    this.bot.mineflayerBot.once('goal_reached', this.handleGoalReachedBound);
-    this.bot.mineflayerBot.once('path_update', this.handlePathUpdateBound);
+    this.bot.mineflayerBot.on('goal_reached', this.handleGoalReachedBound);
+    this.bot.mineflayerBot.on('path_update', this.handlePathUpdateBound);
   }
 
   private async stopPathfinding(): Promise<void> {
