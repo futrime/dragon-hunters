@@ -119,7 +119,6 @@ router.route("/:jobID/:operation").post((async (req, res) => {
     const operation = req.params.operation;
 
     const bot: Bot = req.app.locals.bot;
-
     // Find the job according to its id
     const job = bot.getJob(jobID);
     if (job === undefined) {
@@ -135,7 +134,7 @@ router.route("/:jobID/:operation").post((async (req, res) => {
     // Check if the operation is valid
     let errorMessage: string | null = null;
     if (operation === "start" && job.state !== ActionInstanceState.READY) {
-      errorMessage = `Job ${job.id} cannot be started because it's not READY.`;
+      errorMessage = `Job ${job.id} cannot be started because its state is ${job.state}.`;
     } else if (
       operation === "pause" &&
       job.state !== ActionInstanceState.RUNNING
@@ -152,7 +151,7 @@ router.route("/:jobID/:operation").post((async (req, res) => {
     ) {
       errorMessage = `Job ${job.id} cannot be canceled because its state is ${job.state}.`;
     }
-    
+
     if (errorMessage !== null) {
       return res.status(409).send({
         apiVersion: "0.0.0",

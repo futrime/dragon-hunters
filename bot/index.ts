@@ -146,5 +146,5 @@ async function setupExpress(
 
 function setupPredefinedActions(bot: Bot) {
   bot.addAction(new GoToAction());
-  bot.addAction(new ExploreUntilAction);
+  bot.addAction(new ExploreUntilAction());
 }
