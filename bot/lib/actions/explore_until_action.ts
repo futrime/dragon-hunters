@@ -2,9 +2,9 @@ import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
 import {Parameter} from '../parameter.js';
 
+import {Action} from './action.js';
 import {ActionInstance} from './action_instance.js';
 import {ExploreUntilActionInstance} from './explore_until_action_instance.js';
-import {PredefinedAction} from './predefined_action.js';
 
 const NAME = 'ExploreUntil';
 
@@ -33,7 +33,7 @@ const PARAMETERS: ReadonlyArray<Parameter> = [
   },
 ];
 
-export class ExploreUntilAction extends PredefinedAction {
+export class ExploreUntilAction extends Action {
   constructor() {
     super(NAME, DESCRIPTION, PARAMETERS);
   }

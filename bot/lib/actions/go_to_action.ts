@@ -2,9 +2,9 @@ import {Arg} from '../arg.js';
 import {Bot} from '../bot.js';
 import {Parameter} from '../parameter.js';
 
+import {Action} from './action.js';
 import {ActionInstance} from './action_instance.js';
 import {GoToActionInstance} from './go_to_action_instance.js';
-import {PredefinedAction} from './predefined_action.js';
 
 const NAME = 'GoTo';
 
@@ -28,7 +28,7 @@ const PARAMETERS: ReadonlyArray<Parameter> = [
   },
 ];
 
-export class GoToAction extends PredefinedAction {
+export class GoToAction extends Action {
   constructor() {
     super(NAME, DESCRIPTION, PARAMETERS);
   }

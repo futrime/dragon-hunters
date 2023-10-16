@@ -2,7 +2,7 @@ import {ActionInvocation} from './action_invocation.js';
 import {Program} from './program.js';
 
 export class SequenceProgram extends Program {
-  constructor(public readonly sequence: Program[]) {
+  constructor(readonly sequence: Program[]) {
     super();
   }
 

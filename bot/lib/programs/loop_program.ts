@@ -2,7 +2,7 @@ import {ActionInvocation} from './action_invocation.js';
 import {Program} from './program.js';
 
 export class LoopProgram extends Program {
-  constructor(public readonly program: Program, public readonly count: number) {
+  constructor(readonly program: Program, readonly count: number) {
     super();
   }
 
