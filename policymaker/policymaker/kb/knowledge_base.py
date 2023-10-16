@@ -1,13 +1,13 @@
 import copy
 import json
 import os
-import pathlib
+import tarfile
 
 
 class KnowledgeBase:
     def __init__(
         self,
-        base_path: str = os.path.join(os.getcwd(), "data"),
+        base_path: str = "data/data.tar",
         recipe: bool = True,
         loot: bool = True,
         drop: bool = True,
@@ -18,8 +18,12 @@ class KnowledgeBase:
         :param recipe: load recipe or not
         :param loot: load loot or not
         """
-        self.__base_path = base_path
+        if os.path.exists(base_path):
+            self.__tar = tarfile.open(base_path, "r")
         self.load(recipe, loot, drop, resume)
+
+    def __del__(self):
+        self.__tar.close()
 
     def load(self, recipe, loot, drop, resume):
         """
@@ -40,8 +44,8 @@ class KnowledgeBase:
         if self.__drop:
             self._load_drop()
         if self.__resume:
-            with open(f"{self.__base_path}/qa.json", "r") as f:
-                self.__qa = json.load(f)
+            with open("qa.json", "r") as qa:
+                self.__qa = json.load(qa)
 
     def _load_recipe_shapeless(self, recipe):
         """
@@ -108,16 +112,20 @@ class KnowledgeBase:
         for ingredient in recipe["ingredients"]:
             if "tag" in ingredient:
                 tag = ingredient["tag"].split(":")[1]
-                with open(f"{self.__base_path}/tags/items/{tag}.json", "r") as f:
+                if f"tags/items/{tag}.json" in self.__tar.getnames():
+                    f = self.__tar.extractfile(f"tags/items/{tag}.json")
                     tag = json.load(f)
                     recipe_list = tag["values"]
                     for item in recipe_list:
                         if item.startswith("#minecraft:"):
                             recipe_list.remove(item)
-                            with open(
-                                f"{self.__base_path}/tags/items/{item.split(':')[1]}.json",
-                                "r",
-                            ) as f:
+                            if (
+                                f"tags/items/{item.split(':')[1]}.json"
+                                in self.__tar.getnames()
+                            ):
+                                f = self.__tar.extractfile(
+                                    f"tags/items/{item.split(':')[1]}.json"
+                                )
                                 tag = json.load(f)
                                 recipe_list.extend(tag["values"])
                     if len(this_recipe) == 1:
@@ -202,16 +210,20 @@ class KnowledgeBase:
         for key in recipe["key"]:
             if "tag" in recipe["key"][key]:
                 tag = recipe["key"][key]["tag"].split(":")[1]
-                with open(f"{self.__base_path}/tags/items/{tag}.json", "r") as f:
+                if f"tags/items/{tag}.json" in self.__tar.getnames():
+                    f = self.__tar.extractfile(f"tags/items/{tag}.json")
                     tag = json.load(f)
                     recipe_list = tag["values"]
                     for item in recipe_list:
                         if item.startswith("#minecraft:"):
                             recipe_list.remove(item)
-                            with open(
-                                f"{self.__base_path}/tags/items/{item.split(':')[1]}.json",
-                                "r",
-                            ) as f:
+                            if (
+                                f"tags/items/{item.split(':')[1]}.json"
+                                in self.__tar.getnames()
+                            ):
+                                f = self.__tar.extractfile(
+                                    f"tags/items/{item.split(':')[1]}.json"
+                                )
                                 tag = json.load(f)
                                 recipe_list.extend(tag["values"])
                     reqNum = len(recipe_list) * reqNum
@@ -252,16 +264,20 @@ class KnowledgeBase:
             for key in recipe["key"]:
                 if "tag" in recipe["key"][key]:
                     tag = recipe["key"][key]["tag"].split(":")[1]
-                    with open(f"{self.__base_path}/tags/items/{tag}.json", "r") as f:
+                    if f"tags/items/{tag}.json" in self.__tar.getnames():
+                        f = self.__tar.extractfile(f"tags/items/{tag}.json")
                         tag = json.load(f)
                         recipe_list = tag["values"]
                         for item in recipe_list:
                             if item.startswith("#minecraft:"):
                                 recipe_list.remove(item)
-                                with open(
-                                    f"{self.__base_path}/tags/items/{item.split(':')[1]}.json",
-                                    "r",
-                                ) as f:
+                                if (
+                                    f"tags/items/{item.split(':')[1]}.json"
+                                    in self.__tar.getnames()
+                                ):
+                                    f = self.__tar.extractfile(
+                                        f"tags/items/{item.split(':')[1]}.json"
+                                    )
                                     tag = json.load(f)
                                     recipe_list.extend(tag["values"])
                         stride = reqNum // len(recipe_list)
@@ -347,16 +363,20 @@ class KnowledgeBase:
 
         if "tag" in recipe["ingredient"]:
             tag = recipe["ingredient"]["tag"].split(":")[1]
-            with open(f"{self.__base_path}/tags/items/{tag}.json", "r") as f:
+            if f"tags/items/{tag}.json" in self.__tar.getnames():
+                f = self.__tar.extractfile(f"tags/items/{tag}.json")
                 tag = json.load(f)
                 recipe_list = tag["values"]
                 for item in recipe_list:
                     if item.startswith("#minecraft:"):
                         recipe_list.remove(item)
-                        with open(
-                            f"{self.__base_path}/tags/items/{item.split(':')[1]}.json",
-                            "r",
-                        ) as f:
+                        if (
+                            f"tags/items/{item.split(':')[1]}.json"
+                            in self.__tar.getnames()
+                        ):
+                            f = self.__tar.extractfile(
+                                f"tags/items/{item.split(':')[1]}.json"
+                            )
                             tag = json.load(f)
                             recipe_list.extend(tag["values"])
                 for _ in range(len(recipe_list) - 1):
@@ -381,10 +401,9 @@ class KnowledgeBase:
         """
         Load recipe from knowledge base
         """
-        recipe_path = f"{self.__base_path}/recipes"
-
-        for recipe_file in os.listdir(recipe_path):
-            with open(f"{recipe_path}/{recipe_file}", "r") as f:
+        for fileName in self.__tar.getnames():
+            if fileName.startswith("recipes") and fileName.endswith(".json"):
+                f = self.__tar.extractfile(fileName)
                 recipe = json.load(f)
                 craft_type = recipe["type"]
 
@@ -441,12 +460,13 @@ class KnowledgeBase:
         Load loot from knowledge base
         """
 
-        loot_path = f"{self.__base_path}/loot_tables/entities"
-        for loot_file in os.listdir(loot_path):
-            if loot_file.endswith(".json"):
-                with open(f"{loot_path}/{loot_file}", "r") as f:
-                    loot = json.load(f)
-                    self._load_loot_table(loot, loot_file.split(".")[0])
+        for fileName in self.__tar.getnames():
+            if fileName.startswith("loot_tables/entities") and fileName.endswith(
+                ".json"
+            ):
+                f = self.__tar.extractfile(fileName)
+                loot = json.load(f)
+                self._load_loot_table(loot, fileName.split("/")[-1].split(".")[0])
 
     def _load_drop_table(self, drop, name):
         """
@@ -664,7 +684,8 @@ class KnowledgeBase:
             return ""
 
     def _add_mine_condition(self):
-        with open(f"{self.__base_path}/blocks.json") as f:
+        if "blocks.json" in self.__tar.getnames():
+            f = self.__tar.extractfile("blocks.json")
             blocks = json.load(f)
             for block in blocks:
                 if block["material"] == "mineable/pickaxe":
@@ -707,18 +728,17 @@ class KnowledgeBase:
         """
         Load drop from knowledge base
         """
-        drop_path = f"{self.__base_path}/loot_tables/blocks"
-        for drop_file in os.listdir(drop_path):
-            if drop_file.endswith(".json"):
-                with open(f"{drop_path}/{drop_file}", "r") as f:
-                    drop = json.load(f)
-                    self._load_drop_table(drop, drop_file.split(".")[0])
+        for fileName in self.__tar.getnames():
+            if fileName.endswith(".json") and fileName.startswith("loot_tables/blocks"):
+                f = self.__tar.extractfile(fileName)
+                drop = json.load(f)
+                self._load_drop_table(drop, fileName.split(".")[0].split("/")[-1])
 
-        for drop_file in os.listdir(drop_path):
-            if drop_file.endswith(".json"):
-                with open(f"{drop_path}/{drop_file}", "r") as f:
-                    drop = json.load(f)
-                    self._add_condition(drop, drop_file.split(".")[0])
+        for fileName in self.__tar.getnames():
+            if fileName.endswith(".json") and fileName.startswith("loot_tables/blocks"):
+                f = self.__tar.extractfile(fileName)
+                drop = json.load(f)
+                self._add_condition(drop, fileName.split(".")[0].split("/")[-1])
 
         self._add_mine_condition()
 
@@ -733,7 +753,7 @@ class KnowledgeBase:
             question = input("Question: ")
         if answer == "":
             answer = input("Answer: ")
-        with open(f"{self.__base_path}/qa.json", "w") as f:
+        with open(f"./qa.json", "w") as f:
             qa = json.dumps(self.__qa, indent=4)
             f.write(qa)
 

@@ -1,10 +1,6 @@
 on:
   pull_request:
   push:
-    paths:
-      - .github/workflows/build.yml
-      - bot
-      - registry
   workflow_dispatch:
 
 jobs:
