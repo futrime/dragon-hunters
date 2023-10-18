@@ -10,6 +10,7 @@ export abstract class ActionInstance {
   readonly args: Record<string, Arg>;
   readonly eventEmitter = new EventEmitter();
 
+  private wrappedMessage: string = '';
   private wrappedState: ActionInstanceState = ActionInstanceState.READY;
 
   constructor(
@@ -23,6 +24,14 @@ export abstract class ActionInstance {
     for (const arg of args) {
       this.args[arg.name] = arg;
     }
+  }
+
+  get message(): string {
+    return this.wrappedMessage;
+  }
+
+  get state(): ActionInstanceState {
+    return this.wrappedState;
   }
 
   /**
@@ -101,6 +110,7 @@ export abstract class ActionInstance {
   protected abstract cancelRun(): Promise<void>;
 
   protected fail(reason: string): void {
+    this.wrappedMessage = reason;
     this.wrappedState = ActionInstanceState.FAILED;
     this.eventEmitter.emit('fail', this, reason);
     consola.log(`${this.actionName}#${this.id} failed: ${reason}`);
@@ -116,9 +126,5 @@ export abstract class ActionInstance {
     this.wrappedState = ActionInstanceState.SUCCEEDED;
     this.eventEmitter.emit('succeed', this);
     consola.log(`${this.actionName}#${this.id} succeeded`);
-  }
-
-  get state(): ActionInstanceState {
-    return this.wrappedState;
   }
 }
