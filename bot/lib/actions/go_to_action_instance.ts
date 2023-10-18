@@ -32,8 +32,8 @@ export class GoToActionInstance extends ActionInstance {
   private readonly y: number;
   private readonly z: number;
 
-  private handleGoalReachedBound?: () => Promise<void>;
-  private handlePathUpdateBound?: (result: {status: string}) => Promise<void>;
+  private onGoalReachedBound = this.onGoalReached.bind(this);
+  private onPathUpdateBound = this.onPathUpdate.bind(this);
 
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
@@ -63,13 +63,13 @@ export class GoToActionInstance extends ActionInstance {
     await this.startPathfinding();
   }
 
-  private async handleGoalReached(): Promise<void> {
+  private async onGoalReached(): Promise<void> {
     await this.stopPathfinding();
 
     return this.succeed();
   }
 
-  private async handlePathUpdate(result: {status: string}): Promise<void> {
+  private async onPathUpdate(result: {status: string}): Promise<void> {
     if (result.status !== 'noPath' && result.status !== 'timeout') {
       return;
     }
@@ -95,32 +95,26 @@ export class GoToActionInstance extends ActionInstance {
 
 
   private async startPathfinding(): Promise<void> {
-    if (this.handleGoalReachedBound !== undefined ||
-        this.handlePathUpdateBound !== undefined) {
+    if (this.onGoalReachedBound !== undefined ||
+        this.onPathUpdateBound !== undefined) {
       throw new Error('pathfinding already started');
     }
 
     const goal = new pathfinderModule.goals.GoalBlock(this.x, this.y, this.z);
     this.bot.mineflayerBot.pathfinder.setGoal(goal);
 
-    this.handleGoalReachedBound = this.handleGoalReached.bind(this);
-    this.handlePathUpdateBound = this.handlePathUpdate.bind(this);
-
-    this.bot.mineflayerBot.on('goal_reached', this.handleGoalReachedBound);
-    this.bot.mineflayerBot.on('path_update', this.handlePathUpdateBound);
+    this.bot.mineflayerBot.on('goal_reached', this.onGoalReachedBound);
+    this.bot.mineflayerBot.on('path_update', this.onPathUpdateBound);
   }
 
   private async stopPathfinding(): Promise<void> {
-    if (this.handleGoalReachedBound === undefined ||
-        this.handlePathUpdateBound === undefined) {
+    if (this.onGoalReachedBound === undefined ||
+        this.onPathUpdateBound === undefined) {
       throw new Error('pathfinding not started');
     }
 
-    this.bot.mineflayerBot.off('goal_reached', this.handleGoalReachedBound);
-    this.bot.mineflayerBot.off('path_update', this.handlePathUpdateBound);
-
-    this.handleGoalReachedBound = undefined;
-    this.handlePathUpdateBound = undefined;
+    this.bot.mineflayerBot.off('goal_reached', this.onGoalReachedBound);
+    this.bot.mineflayerBot.off('path_update', this.onPathUpdateBound);
 
     this.bot.mineflayerBot.pathfinder.setGoal(null);
   }

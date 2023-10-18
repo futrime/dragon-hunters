@@ -10,11 +10,15 @@ import {Action} from './actions/action.js';
 import {ActionInstance} from './actions/action_instance.js';
 import {ActionInstanceState} from './actions/action_instance_state.js';
 import {Arg} from './arg.js';
+import {BotEvent} from './events/bot_event.js';
+import {ChatEvent} from './events/chat_event.js';
+import {WhisperEvent} from './events/whisper_event.js';
 
 export class Bot {
   readonly mcdata: minecraftData.IndexedData;
 
   private actions: Record<string, Action> = {};
+  private events: BotEvent[] = [];
   private jobs: Record<string, ActionInstance> = {};
   private wrappedMineflayerBot: mineflayer.Bot;
 
@@ -30,6 +34,8 @@ export class Bot {
     this.mcdata = minecraftData(version);
     this.wrappedMineflayerBot =
         this.createMineflayerBot(host, port, username, version);
+
+    this.setupEvents();
   }
 
   get mineflayerBot(): mineflayer.Bot {
@@ -93,6 +99,22 @@ export class Bot {
    */
   getActions(): ReadonlyArray<Action> {
     return Object.values(this.actions);
+  }
+
+  /**
+   * Gets events from the bot.
+   * @param since The time to get events from.
+   * @returns The events.
+   */
+  getEvents(since: Date = new Date(0)): ReadonlyArray<BotEvent> {
+    const events: BotEvent[] = [];
+    for (const event of this.events) {
+      if (event.updatedTime >= since) {
+        events.push(event);
+      }
+    }
+
+    return events;
   }
 
   /**
@@ -168,5 +190,50 @@ export class Bot {
     });
 
     return bot;
+  }
+
+  private onChatEvent(username: string, message: string): void {
+    const event = new ChatEvent(
+        nanoid(),
+        [
+          {
+            name: 'username',
+            value: username,
+          },
+          {
+            name: 'message',
+            value: message,
+          }
+        ],
+        new Date());
+
+    this.events.push(event);
+    consola.log(`event ${event.name}#${event.id} {username: ${
+        username}, message: ${message}}`);
+  }
+
+  private onWhisperEvent(username: string, message: string): void {
+    const event = new WhisperEvent(
+        nanoid(),
+        [
+          {
+            name: 'username',
+            value: username,
+          },
+          {
+            name: 'message',
+            value: message,
+          }
+        ],
+        new Date());
+
+    this.events.push(event);
+    consola.log(`event ${event.name}#${event.id} {username: ${
+        username}, message: ${message}}`);
+  }
+
+  private setupEvents(): void {
+    this.mineflayerBot.on('chat', this.onChatEvent.bind(this));
+    this.mineflayerBot.on('whisper', this.onWhisperEvent.bind(this));
   }
 }

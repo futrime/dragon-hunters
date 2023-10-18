@@ -48,7 +48,7 @@ export abstract class ActionInstance {
 
     this.wrappedState = ActionInstanceState.CANCELED;
     this.eventEmitter.emit('cancel', this);
-    consola.log(`${this.actionName}#${this.id} canceled`);
+    consola.log(`action ${this.actionName}#${this.id} canceled`);
   }
 
   /**
@@ -64,7 +64,7 @@ export abstract class ActionInstance {
 
     this.wrappedState = ActionInstanceState.PAUSED;
     this.eventEmitter.emit('pause', this);
-    consola.log(`${this.actionName}#${this.id} paused`);
+    consola.log(`action ${this.actionName}#${this.id} paused`);
   }
 
   /**
@@ -84,7 +84,7 @@ export abstract class ActionInstance {
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('resume', this);
-    consola.log(`${this.actionName}#${this.id} resumed`);
+    consola.log(`action ${this.actionName}#${this.id} resumed`);
   }
 
   /**
@@ -104,7 +104,7 @@ export abstract class ActionInstance {
 
     this.wrappedState = ActionInstanceState.RUNNING;
     this.eventEmitter.emit('start', this);
-    consola.log(`${this.actionName}#${this.id} started`);
+    consola.log(`action ${this.actionName}#${this.id} started`);
   }
 
   protected abstract cancelRun(): Promise<void>;
@@ -113,7 +113,7 @@ export abstract class ActionInstance {
     this.wrappedMessage = reason;
     this.wrappedState = ActionInstanceState.FAILED;
     this.eventEmitter.emit('fail', this, reason);
-    consola.log(`${this.actionName}#${this.id} failed: ${reason}`);
+    consola.log(`action ${this.actionName}#${this.id} failed: ${reason}`);
   }
 
   protected abstract pauseRun(): Promise<void>;
@@ -125,6 +125,6 @@ export abstract class ActionInstance {
   protected succeed(): void {
     this.wrappedState = ActionInstanceState.SUCCEEDED;
     this.eventEmitter.emit('succeed', this);
-    consola.log(`${this.actionName}#${this.id} succeeded`);
+    consola.log(`action ${this.actionName}#${this.id} succeeded`);
   }
 }
