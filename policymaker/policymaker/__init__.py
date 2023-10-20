@@ -1,7 +1,8 @@
 from . import kb
-from .dragon_hunters import DragonHunters
+from .policy_maker import PolicyMaker, PolicyMakerOptions
 
 __all__ = [
     "kb",
-    "DragonHunters",
+    "PolicyMaker",
+    "PolicyMakerOptions",
 ]
