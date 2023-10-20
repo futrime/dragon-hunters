@@ -15,6 +15,7 @@ import {router as routerBotsActions} from './routes/bots/actions.js';
 import {router as routerBotsJobs} from './routes/bots/jobs.js';
 import {router as routerBotsObserve} from './routes/bots/observe.js';
 import {router as routerBotsStatus} from './routes/bots/status.js';
+import { CraftItemAction } from './lib/actions/craft_item_action.js';
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);
@@ -147,4 +148,5 @@ async function setupExpress(
 function setupPredefinedActions(bot: Bot) {
   bot.addAction(new GoToAction());
   bot.addAction(new ExploreUntilAction());
+  bot.addAction(new CraftItemAction());
 }
