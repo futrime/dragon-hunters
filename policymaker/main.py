@@ -13,6 +13,8 @@ async def main():
 
         setup_logging()
 
+        logging.info("starting...")
+
         bot_host = os.environ.get("BOT_HOST", "127.0.0.1")
         bot_port_str = os.environ.get("BOT_PORT", "8080")
         openai_api_key = os.environ.get("OPENAI_API_KEY", "")

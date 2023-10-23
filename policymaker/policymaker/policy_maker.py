@@ -1,8 +1,8 @@
 import copy
+import logging
 from typing import TypedDict
 
-from .legacy_framework.agent import Agent
-from .legacy_framework.bot_connection import BotConnection
+from .bot import Bot
 
 
 class PolicyMakerOptions(TypedDict):
@@ -15,8 +15,13 @@ class PolicyMaker:
     def __init__(self, options: PolicyMakerOptions):
         self._options: PolicyMakerOptions = copy.deepcopy(options)
 
-    async def run(self):
-        connection = BotConnection()
-        agent = Agent(connection)
+        self._bot: Bot = Bot(
+            {
+                "host": self._options["bot_host"],
+                "port": self._options["bot_port"],
+            }
+        )
+        self._logger = logging.getLogger("policymaker")
 
-        agent.run()
+    async def run(self):
+        self._logger.info("not implemented")
