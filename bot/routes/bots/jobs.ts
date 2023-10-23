@@ -158,6 +158,14 @@ router.route('/:jobID/:operation')
                       job.state}.`;
             }
 
+            if (operation === 'pause' && job.canPause === false) {
+              errorMessage = `Job ${
+                  job.id} cannot be paused because its action instance does not support pause.`;
+            } else if (operation === 'resume' && job.canPause === false) {
+              errorMessage = `Job ${
+                  job.id} cannot be resumed because its action instance does not support resume.`;
+            }
+
             if (errorMessage !== null) {
               return res.status(409).send({
                 apiVersion: '0.0.0',

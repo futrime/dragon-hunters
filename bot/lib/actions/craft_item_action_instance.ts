@@ -1,42 +1,39 @@
-import assert from "assert";
-import pathfinderModule from "mineflayer-pathfinder";
-import pWaitFor from "p-wait-for";
-import { Vec3 } from "vec3";
+import {Block} from 'prismarine-block';
+import {Vec3} from 'vec3';
 
-import { Arg } from "../arg.js";
-import { Bot } from "../bot.js";
-import { doArgArrayMatchParameterArray, Parameter } from "../parameter.js";
+import {Arg} from '../arg.js';
+import {Bot} from '../bot.js';
+import {doArgArrayMatchParameterArray, Parameter} from '../parameter.js';
 
-import { ActionInstance } from "./action_instance.js";
-import { Block } from "prismarine-block";
+import {ActionInstance} from './action_instance.js';
 
-const ACTION_NAME = "CraftItem";
+const ACTION_NAME = 'CraftItem';
 
 const PARAMETERS: ReadonlyArray<Parameter> = [
   {
-    name: "itemName",
-    description: "The name of the item",
-    type: "string",
+    name: 'itemName',
+    description: 'The name of the item',
+    type: 'string',
   },
   {
-    name: "count",
-    description: "The count of the item",
-    type: "number",
+    name: 'count',
+    description: 'The count of the item',
+    type: 'number',
   },
   {
-    name: "craftingTableX",
-    description: "The X coordinate of the target crafting table",
-    type: "number",
+    name: 'craftingTableX',
+    description: 'The X coordinate of the target crafting table',
+    type: 'number',
   },
   {
-    name: "craftingTableY",
-    description: "The Y coordinate of the target crafting table",
-    type: "number",
+    name: 'craftingTableY',
+    description: 'The Y coordinate of the target crafting table',
+    type: 'number',
   },
   {
-    name: "craftingTableZ",
-    description: "The Z coordinate of the target crafting table",
-    type: "number",
+    name: 'craftingTableZ',
+    description: 'The Z coordinate of the target crafting table',
+    type: 'number',
   },
 ];
 
@@ -53,21 +50,29 @@ export class CraftItemActionInstance extends ActionInstance {
     super(id, ACTION_NAME, args, bot);
 
     if (doArgArrayMatchParameterArray(args, PARAMETERS) === false) {
-      throw new Error("args do not match parameters");
+      throw new Error('args do not match parameters');
     }
 
-    this.itemName = this.args["itemName"].value as string;
-    this.count = this.args["count"].value as number;
-    this.craftingTableX = this.args["craftingTableX"].value as number;
-    this.craftingTableY = this.args["craftingTableY"].value as number;
-    this.craftingTableZ = this.args["craftingTableZ"].value as number;
+    this.itemName = this.args['itemName'].value as string;
+    this.count = this.args['count'].value as number;
+    this.craftingTableX = this.args['craftingTableX'].value as number;
+    this.craftingTableY = this.args['craftingTableY'].value as number;
+    this.craftingTableZ = this.args['craftingTableZ'].value as number;
+  }
+
+  override get canPause(): boolean {
+    return false;
   }
 
   override async cancelRun(): Promise<void> {}
 
-  override async pauseRun(): Promise<void> {}
+  override async pauseRun(): Promise<void> {
+    throw new Error(`cannot pause ${this.actionName} instance`);
+  }
 
-  override async resumeRun(): Promise<void> {}
+  override async resumeRun(): Promise<void> {
+    throw new Error(`cannot resume ${this.actionName} instance`);
+  }
 
   override async startRun(): Promise<void> {
     this.runCraftItem();
@@ -76,26 +81,21 @@ export class CraftItemActionInstance extends ActionInstance {
   private async runCraftItem(): Promise<void> {
     // const position = this.bot.mineflayerBot.entity.position;
 
-    const craftingTable: Block | null = this.bot.mineflayerBot.blockAt(
-      new Vec3(this.craftingTableX, this.craftingTableY, this.craftingTableZ)
-    );
+    const craftingTable: Block|null = this.bot.mineflayerBot.blockAt(new Vec3(
+        this.craftingTableX, this.craftingTableY, this.craftingTableZ));
 
-    if (craftingTable === null || craftingTable.name !== "crafting_table") {
-      this.fail("Target block is not a crafting table!");
+    if (craftingTable === null || craftingTable.name !== 'crafting_table') {
+      this.fail('Target block is not a crafting table!');
     }
 
     const itemByName = this.bot.mcdata.itemsByName[this.itemName];
     if (itemByName === undefined) {
-      this.fail("Item to be crafted not found!");
+      this.fail('Item to be crafted not found!');
     }
     console.log(craftingTable);
 
     const recipe = this.bot.mineflayerBot.recipesFor(
-      itemByName.id,
-      null,
-      1,
-      craftingTable
-    )[0];
+        itemByName.id, null, 1, craftingTable)[0];
 
     this.bot.mineflayerBot.craft(recipe, this.count, craftingTable!);
   }

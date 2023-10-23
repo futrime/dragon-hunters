@@ -26,6 +26,8 @@ export abstract class ActionInstance {
     }
   }
 
+  abstract get canPause(): boolean;
+
   get message(): string {
     return this.wrappedMessage;
   }

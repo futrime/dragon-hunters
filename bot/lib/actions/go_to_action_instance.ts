@@ -47,6 +47,10 @@ export class GoToActionInstance extends ActionInstance {
     this.z = this.args['z'].value as number;
   }
 
+  override get canPause(): boolean {
+    return true;
+  }
+
   override async cancelRun(): Promise<void> {
     await this.stopPathfinding();
   }

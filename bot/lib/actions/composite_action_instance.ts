@@ -25,6 +25,10 @@ export abstract class CompositeActionInstance extends ActionInstance {
     }
   }
 
+  override get canPause(): boolean {
+    return true;
+  }
+
   protected async afterRun(): Promise<void> {
     // Do nothing
   }
@@ -58,6 +62,8 @@ export abstract class CompositeActionInstance extends ActionInstance {
         this.currentActionInstance, undefined,
         'currentActionInstance should not be undefined');
 
+    await pWaitFor(() => this.currentActionInstance!.canPause === true);
+
     await this.currentActionInstance!.pause();
   }
 
@@ -66,6 +72,11 @@ export abstract class CompositeActionInstance extends ActionInstance {
     assert.notStrictEqual(
         this.currentActionInstance, undefined,
         'currentActionInstance should not be undefined');
+
+    // Paused action instance can pause.
+    assert.strictEqual(
+        this.currentActionInstance!.canPause, true,
+        'paused currentActionInstance should be able to pause');
 
     await this.currentActionInstance!.resume();
   }
