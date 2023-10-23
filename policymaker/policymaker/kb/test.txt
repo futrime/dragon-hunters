@@ -1,0 +1,93 @@
+final goal: {"diamond_pickaxe": 1}
+current_status: {}
+task&tips:
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'oak_log': 1}
+task&tips:
+('craft oak_planks with player crafting', 'to craft oak_planks, you need: oak_log*1, ')
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'oak_planks': 4}
+task&tips:
+('craft crafting_table with player crafting', 'to craft crafting_table, you need: oak_planks*4, ')
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1}
+task&tips:
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1, 'oak_log': 1}
+task&tips:
+('craft oak_planks with player crafting', 'to craft oak_planks, you need: oak_log*1, ')
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1, 'oak_planks': 4}
+task&tips:
+('craft stick with player crafting', 'to craft stick, you need: oak_planks*2, ')
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1, 'oak_planks': 2, 'stick': 2}
+task&tips:
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1, 'oak_planks': 2, 'stick': 2, 'oak_log': 1}
+task&tips:
+('craft oak_planks with player crafting', 'to craft oak_planks, you need: oak_log*1, ')
+
+current_status: {'crafting_table': 1, 'oak_planks': 6, 'stick': 2}
+task&tips:
+('craft wooden_pickaxe with crafting table', 'to craft wooden_pickaxe, you need: stick * 2, oak_planks * 3, ')
+
+current_status: {'crafting_table': 1, 'oak_planks': 3, 'stick': 2, 'wooden_pickaxe': 1}
+task&tips:
+('mine cobblestone to get cobblestone', 'to mine cobblestone, you need: tool: wooden_pickaxe')
+('mine stone to get cobblestone', 'to mine stone, you need: tool: wooden_pickaxe')
+('mine blackstone to get blackstone', 'to mine blackstone, you need: tool: wooden_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 3, 'stick': 2, 'wooden_pickaxe': 1, 'cobblestone': 8}
+task&tips:
+('craft furnace with crafting table', 'to craft furnace, you need: cobblestone * 8, ')
+('mine blackstone to get blackstone', 'to mine blackstone, you need: tool: wooden_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 3, 'stick': 2, 'wooden_pickaxe': 1, 'furnace': 1}
+task&tips:
+('mine cobblestone to get cobblestone', 'to mine cobblestone, you need: tool: wooden_pickaxe')
+('mine stone to get cobblestone', 'to mine stone, you need: tool: wooden_pickaxe')
+('mine blackstone to get blackstone', 'to mine blackstone, you need: tool: wooden_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 3, 'stick': 2, 'wooden_pickaxe': 1, 'furnace': 1, 'cobblestone': 3}
+task&tips:
+('craft stone_pickaxe with crafting table', 'to craft stone_pickaxe, you need: stick * 2, cobblestone * 3, ')
+('mine blackstone to get blackstone', 'to mine blackstone, you need: tool: wooden_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 3, 'wooden_pickaxe': 1, 'furnace': 1, 'stone_pickaxe': 1}
+task&tips:
+('craft stick with player crafting', 'to craft stick, you need: oak_planks*2, ')
+('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stick': 4, 'stone_pickaxe': 1}
+task&tips:
+('mine deepslate_iron_ore to get raw_iron', 'to mine deepslate_iron_ore, you need: tool: stone_pickaxe')
+('mine iron_ore to get raw_iron', 'to mine iron_ore, you need: tool: stone_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stick': 4, 'stone_pickaxe': 1, 'raw_iron': 5}
+task&tips:
+('smelt raw_iron with furnace', 'to smelt raw_iron, you need: raw_iron*1, ')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stick': 4, 'stone_pickaxe': 1, 'iron_ingot': 5}
+task&tips:
+('craft iron_pickaxe with crafting table', 'to craft iron_pickaxe, you need: stick * 2, iron_ingot * 3, ')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stick': 2, 'stone_pickaxe': 1, 'iron_ingot': 2, 'iron_pickaxe': 1}
+task&tips:
+('mine deepslate_diamond_ore to get diamond', 'to mine deepslate_diamond_ore, you need: tool: iron_pickaxe')
+('mine diamond_ore to get diamond', 'to mine diamond_ore, you need: tool: iron_pickaxe')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stick': 2, 'stone_pickaxe': 1, 'iron_ingot': 2, 'iron_pickaxe': 1, 'diamond': 3}
+task&tips:
+('craft diamond_pickaxe with crafting table', 'to craft diamond_pickaxe, you need: stick * 2, diamond * 3, ')
+
+current_status: {'crafting_table': 1, 'oak_planks': 1, 'wooden_pickaxe': 1, 'furnace': 1, 'stone_pickaxe': 1, 'iron_ingot': 2, 'iron_pickaxe': 1, 'diamond_pickaxe': 1}
+task&tips:
+

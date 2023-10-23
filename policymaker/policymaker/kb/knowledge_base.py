@@ -2,12 +2,13 @@ import copy
 import json
 import os
 import tarfile
+import TaskTree
 
 
 class KnowledgeBase:
     def __init__(
         self,
-        base_path: str = "data/data.tar",
+        base_path: str = "data",
         recipe: bool = True,
         loot: bool = True,
         drop: bool = True,
@@ -18,8 +19,10 @@ class KnowledgeBase:
         :param recipe: load recipe or not
         :param loot: load loot or not
         """
-        if os.path.exists(base_path):
-            self.__tar = tarfile.open(base_path, "r")
+
+        if os.path.exists(f"{os.path.dirname(__file__)}/{base_path}"):
+            self.__base_path = f"{os.path.dirname(__file__)}/{base_path}"
+            self.__tar = tarfile.open(f"{self.__base_path}/data.tar", "r")
         self.load(recipe, loot, drop, resume)
 
     def __del__(self):
@@ -44,7 +47,7 @@ class KnowledgeBase:
         if self.__drop:
             self._load_drop()
         if self.__resume:
-            with open("qa.json", "r") as qa:
+            with open(f"{self.__base_path}/qa.json", "r") as qa:
                 self.__qa = json.load(qa)
 
     def _load_recipe_shapeless(self, recipe):
@@ -466,7 +469,8 @@ class KnowledgeBase:
             ):
                 f = self.__tar.extractfile(fileName)
                 loot = json.load(f)
-                self._load_loot_table(loot, fileName.split("/")[-1].split(".")[0])
+                if self._is_normal_mob(fileName.split("/")[-1].split(".")[0]):
+                    self._load_loot_table(loot, fileName.split("/")[-1].split(".")[0])
 
     def _load_drop_table(self, drop, name):
         """
@@ -562,9 +566,7 @@ class KnowledgeBase:
                                         if "condition" not in item_:
                                             item_["condition"] = condition_str
                                         else:
-                                            item_["condition"] += (
-                                                " and " + condition_str
-                                            )
+                                            item_["condition"] += "," + condition_str
                                         break
                                 for item_ in self.__material_to_crafted[name]:
                                     if (
@@ -574,9 +576,7 @@ class KnowledgeBase:
                                         if "condition" not in item_:
                                             item_["condition"] = condition_str
                                         else:
-                                            item_["condition"] += (
-                                                " and " + condition_str
-                                            )
+                                            item_["condition"] += "," + condition_str
                                         break
 
                         if "name" not in item:
@@ -587,14 +587,14 @@ class KnowledgeBase:
                                 if "condition" not in item_:
                                     item_["condition"] = condition_str
                                 else:
-                                    item_["condition"] += " and " + condition_str
+                                    item_["condition"] += "," + condition_str
                                 break
                         for item_ in self.__material_to_crafted[name]:
                             if item_["item"] == item_name and item_["type"] == "mine":
                                 if "condition" not in item_:
                                     item_["condition"] = condition_str
                                 else:
-                                    item_["condition"] += " and " + condition_str
+                                    item_["condition"] += "," + condition_str
                                 break
             for item in pool["entries"]:
                 if "children" in item:
@@ -616,7 +616,7 @@ class KnowledgeBase:
                                     if "condition" not in item_:
                                         item_["condition"] = condition_str
                                     else:
-                                        item_["condition"] += " and " + condition_str
+                                        item_["condition"] += "," + condition_str
                                     break
                             for item_ in self.__material_to_crafted[name]:
                                 if (
@@ -626,7 +626,7 @@ class KnowledgeBase:
                                     if "condition" not in item_:
                                         item_["condition"] = condition_str
                                     else:
-                                        item_["condition"] += " and " + condition_str
+                                        item_["condition"] += "," + condition_str
                                     break
 
                 if "name" not in item:
@@ -643,14 +643,14 @@ class KnowledgeBase:
                             if "condition" not in item_:
                                 item_["condition"] = condition_str
                             else:
-                                item_["condition"] += " and " + condition_str
+                                item_["condition"] += "," + condition_str
                             break
                     for item_ in self.__material_to_crafted[name]:
                         if item_["item"] == item_name and item_["type"] == "mine":
                             if "condition" not in item_:
                                 item_["condition"] = condition_str
                             else:
-                                item_["condition"] += " and " + condition_str
+                                item_["condition"] += "," + condition_str
                             break
 
     def _get_condition(self, condition):
@@ -665,7 +665,7 @@ class KnowledgeBase:
                     condition_str += item.split(":")[1] + ","
                 return condition_str[:-1]
             elif "enchantments" in condition["predicate"]:
-                condition_str = "enchant:"
+                condition_str = "enchant: "
                 for enchant in condition["predicate"]["enchantments"]:
                     condition_str += enchant["enchantment"].split(":")[1] + ","
                 return condition_str[:-1]
@@ -674,11 +674,13 @@ class KnowledgeBase:
         elif condition["condition"] == "minecraft:alternative":
             condition_str = ""
             for condition_ in condition["terms"]:
-                condition_str += self._get_condition(condition_) + " or "
+                condition_str += self._get_condition(condition_) + ","
             return condition_str[:-4]
         elif condition["condition"] == "minecraft:inverted":
-            condition_str = "not "
-            condition_str += self._get_condition(condition["term"])
+            condition_str = self._get_condition(condition["term"])
+            conditions = condition_str.split(",")
+            conditions = ["not " + condition for condition in conditions]
+            condition_str = ",".join(conditions)
             return condition_str
         else:
             return ""
@@ -688,41 +690,44 @@ class KnowledgeBase:
             f = self.__tar.extractfile("blocks.json")
             blocks = json.load(f)
             for block in blocks:
-                if block["material"] == "mineable/pickaxe":
-                    if "harvestTools" not in block:
-                        continue
-                    condition_str = "tool: "
-                    if "737" in block["harvestTools"]:
-                        condition_str += "any pickaxe"
-                    elif "742" in block["harvestTools"]:
-                        condition_str += "pickaxe better than stone"
-                    elif "752" in block["harvestTools"]:
-                        condition_str += "pickaxe better than iron"
-                    elif "757" in block["harvestTools"]:
-                        condition_str += "pickaxe better than diamond"
-                    elif "762" in block["harvestTools"]:
-                        condition_str += "netherite pickaxe"
-                    else:
-                        continue
-                    if block["name"] in self.__material_to_crafted:
-                        for item in self.__material_to_crafted[block["name"]]:
-                            if item["type"] == "mine":
-                                if "condition" not in item:
-                                    item["condition"] = condition_str
-                                else:
-                                    item["condition"] += " and " + condition_str
-                                for item_ in self.__crafted_to_material[item["item"]]:
-                                    if (
-                                        item_["recipe"] == {block["name"]: 1}
-                                        and item_["type"] == "mine"
-                                    ):
-                                        if "condition" not in item_:
-                                            item_["condition"] = condition_str
-                                        else:
-                                            item_["condition"] += (
-                                                " and " + condition_str
-                                            )
-                                        break
+                if self._is_normal_block(block["name"]):
+                    if block["material"] == "mineable/pickaxe":
+                        if "harvestTools" not in block:
+                            continue
+                        condition_str = "tool: "
+                        if "737" in block["harvestTools"]:
+                            condition_str += "wooden_pickaxe"
+                        elif "742" in block["harvestTools"]:
+                            condition_str += "stone_pickaxe"
+                        elif "752" in block["harvestTools"]:
+                            condition_str += "iron_pickaxe"
+                        elif "757" in block["harvestTools"]:
+                            condition_str += "diamond_pickaxe"
+                        elif "762" in block["harvestTools"]:
+                            condition_str += "netherite_pickaxe"
+                        else:
+                            continue
+                        if block["name"] in self.__material_to_crafted:
+                            for item in self.__material_to_crafted[block["name"]]:
+                                if item["type"] == "mine":
+                                    if "condition" not in item:
+                                        item["condition"] = condition_str
+                                    else:
+                                        item["condition"] += "," + condition_str
+                                    for item_ in self.__crafted_to_material[
+                                        item["item"]
+                                    ]:
+                                        if (
+                                            item_["recipe"] == {block["name"]: 1}
+                                            and item_["type"] == "mine"
+                                        ):
+                                            if "condition" not in item_:
+                                                item_["condition"] = condition_str
+                                            else:
+                                                item_["condition"] += (
+                                                    "," + condition_str
+                                                )
+                                            break
 
     def _load_drop(self):
         """
@@ -732,13 +737,15 @@ class KnowledgeBase:
             if fileName.endswith(".json") and fileName.startswith("loot_tables/blocks"):
                 f = self.__tar.extractfile(fileName)
                 drop = json.load(f)
-                self._load_drop_table(drop, fileName.split(".")[0].split("/")[-1])
+                if self._is_normal_block(fileName.split(".")[0].split("/")[-1]):
+                    self._load_drop_table(drop, fileName.split(".")[0].split("/")[-1])
 
         for fileName in self.__tar.getnames():
             if fileName.endswith(".json") and fileName.startswith("loot_tables/blocks"):
                 f = self.__tar.extractfile(fileName)
                 drop = json.load(f)
-                self._add_condition(drop, fileName.split(".")[0].split("/")[-1])
+                if self._is_normal_block(fileName.split(".")[0].split("/")[-1]):
+                    self._add_condition(drop, fileName.split(".")[0].split("/")[-1])
 
         self._add_mine_condition()
 
@@ -753,7 +760,7 @@ class KnowledgeBase:
             question = input("Question: ")
         if answer == "":
             answer = input("Answer: ")
-        with open(f"./qa.json", "w") as f:
+        with open(f"{self.__base_path}/qa.json", "w") as f:
             qa = json.dumps(self.__qa, indent=4)
             f.write(qa)
 
@@ -768,6 +775,120 @@ class KnowledgeBase:
             if key_word in question:
                 qa_dict[question] = self.__qa[question]
         return qa_dict
+
+    def _is_normal_block(self, block: str) -> bool:
+        """
+        :param block: str, name of the block
+        :return: bool, whether the block is a normal block
+        Check whether a block is a normal block
+        """
+        if block.endswith("ore"):
+            return True
+        if block.endswith("log"):
+            return True
+        if block.endswith("stone"):
+            return True
+        if block.endswith("dirt"):
+            return True
+        if block.endswith("wood"):
+            return True
+        if block == "obsidian":
+            return True
+        return False
+
+    def _is_normal_mob(self, mob: str) -> bool:
+        if mob in [
+            "blaze",
+            "ghast",
+            "enderman",
+            "slime",
+            "skeleton",
+            "spider",
+            "chicken",
+            "cow",
+            "creeper",
+            "pig",
+            "sheep",
+        ]:
+            return True
+
+    def get_task_tree(
+        self,
+        required_item: dict[str, int],
+        current_depth: int = 1,
+        condition: str = "",
+        prev_item: str = "",
+        type: str = "",
+        max_num: int = 10,
+        max_depth: int = 10,
+    ) -> (TaskTree, bool):
+        """
+        :param required_item: str, name of the required item
+        :return: TaskTree, the task tree, bool, find an optimal solution
+        Get the task tree of a required item
+        """
+        task_tree = TaskTree.TaskTree()
+        task_tree.prev_item = prev_item
+        task_tree.required_item = required_item
+        task_tree.type = type
+        task_tree.condition = condition
+
+        task_tree.next_layer = []
+
+        if current_depth >= max_depth:
+            return task_tree, False
+
+        if type == "combat" or type == "mine":
+            return task_tree, True
+
+        if current_depth > max_depth:
+            return task_tree, False
+
+        for item_ in required_item:
+            this_recipe = []
+            flag = False
+            if item_ in self.__crafted_to_material:
+                for item in self.__crafted_to_material[item_]:
+                    if item["type"] == "mine":
+                        flag = True
+                        condition_str = ""
+                        if "condition" in item:
+                            condition_str = item["condition"]
+                        this_recipe.append(
+                            self.get_task_tree(
+                                current_depth=current_depth + 1,
+                                prev_item=item_,
+                                required_item=item["recipe"],
+                                condition=condition_str,
+                                type=item["type"],
+                            )[0]
+                        )
+                if flag == True:
+                    task_tree.next_layer.append(this_recipe)
+                else:
+                    flag = False
+                    next_num = 0
+                    for item in self.__crafted_to_material[item_]:
+                        condition_str = ""
+                        if prev_item in item["recipe"]:
+                            continue
+                        if "condition" in item:
+                            condition_str = item["condition"]
+                        newTree, flag = self.get_task_tree(
+                            current_depth=current_depth + 1,
+                            required_item=item["recipe"],
+                            prev_item=item_,
+                            condition=condition_str,
+                            type=item["type"],
+                        )
+                        if flag == True:
+                            this_recipe.append(newTree)
+                            next_num += 1
+                            if next_num >= max_num:
+                                break
+                    task_tree.next_layer.append(this_recipe)
+
+        return task_tree, flag
 
     @property
     def material_to_crafted(self):
