@@ -1,8 +1,8 @@
-from __future__ import annotations
-
-import asyncio
 import copy
 from typing import TypedDict
+
+from .bot_api_client import BotApiClient
+from .bot_observe_response_data import BotObserveResponseData
 
 
 class BotOptions(TypedDict):
@@ -29,7 +29,19 @@ class Bot:
 
         self._options: BotOptions = copy.deepcopy(options)
 
-        self._loop_task: asyncio.Task[None] | None = None
+        self._api_client: BotApiClient = BotApiClient(
+            {
+                "host": self._options["host"],
+                "port": self._options["port"],
+            }
+        )
+        self._is_running: bool = False
+
+    async def observe(self) -> BotObserveResponseData:
+        """Observes the world"""
+
+        response_data = await self._api_client.post("/observe", {})
+        return BotObserveResponseData(**response_data)
 
     async def run(self):
         """Runs the bot.
@@ -38,10 +50,10 @@ class Bot:
             RuntimeError: If the bot is already running.
         """
 
-        if self._loop_task is not None:
+        if self._is_running:
             raise RuntimeError("bot is already running")
 
-        self._loop_task = asyncio.create_task(self._loop())
+        self._is_running = True
 
     async def stop(self):
         """Stops the bot.
@@ -50,12 +62,7 @@ class Bot:
             RuntimeError: If the bot is not running.
         """
 
-        if self._loop_task is None:
+        if not self._is_running:
             raise RuntimeError("bot is not running")
 
-        self._loop_task.cancel("bot is stopping")
-        await self._loop_task
-
-    async def _loop(self) -> None:
-        while True:
-            pass
+        self._is_running = False
