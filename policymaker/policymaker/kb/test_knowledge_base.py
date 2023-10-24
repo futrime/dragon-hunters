@@ -35,7 +35,7 @@ class KnowledgeBaseTest(unittest.TestCase):
             "diamond_pickaxe": 1,
         }
 
-        with open("test.txt", "a") as f:
+        with open("example.txt", "a") as f:
             f.write(f"current_status: {current_status}\n")
             f.write("task&tips:\n")
             print(f"final goal: {goal}")

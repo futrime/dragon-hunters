@@ -818,6 +818,7 @@ class KnowledgeBase:
         current_depth: int = 1,
         condition: str = "",
         prev_item: str = "",
+        prev_num: int = 1,
         type: str = "",
         max_num: int = 10,
         max_depth: int = 10,
@@ -829,6 +830,7 @@ class KnowledgeBase:
         """
         task_tree = TaskTree.TaskTree()
         task_tree.prev_item = prev_item
+        task_tree.prev_num = prev_num
         task_tree.required_item = required_item
         task_tree.type = type
         task_tree.condition = condition
@@ -858,6 +860,7 @@ class KnowledgeBase:
                             self.get_task_tree(
                                 current_depth=current_depth + 1,
                                 prev_item=item_,
+                                prev_num=required_item[item_],
                                 required_item=item["recipe"],
                                 condition=condition_str,
                                 type=item["type"],
@@ -878,6 +881,7 @@ class KnowledgeBase:
                             current_depth=current_depth + 1,
                             required_item=item["recipe"],
                             prev_item=item_,
+                            prev_num=required_item[item_],
                             condition=condition_str,
                             type=item["type"],
                         )

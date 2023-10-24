@@ -4,6 +4,7 @@ import queue
 class TaskTree:
     def __init__(self):
         self.prev_item: str = ""
+        self.prev_num: int = 0
         self.required_item: dict[str, int] = {}
         self.condition: str = ""
         self.type: str = ""
@@ -111,14 +112,14 @@ class TaskTree:
                 ) or this_option.prev_item.endswith("wood"):
                     tips_list.append(
                         (
-                            "mine wood or log to get wood or log",
+                            f"mine {this_option.prev_num} wood or log for  to get wood or log",
                             "there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft",
                         )
                     )
                 else:
                     tips_list.append(
                         (
-                            f"mine {list(this_option.required_item.keys())[0]} to get {this_option.prev_item}",
+                            f"mine {this_option.prev_num} {list(this_option.required_item.keys())[0]} to get {this_option.prev_item}",
                             this_tip,
                         )
                     )

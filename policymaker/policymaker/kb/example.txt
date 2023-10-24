@@ -1,4 +1,5 @@
 final goal: {"diamond_pickaxe": 1}
+
 current_status: {}
 task&tips:
 ('mine wood or log to get wood or log', 'there are oak_log, birch_log, spruce_log, jungle_log, acacia_log, dark_oak_log, mangrove_log and oak_wood, birch_wood, spruce_wood, jungle_wood, acacia_wood, dark_oak_wood, mangrove_wood in Minecraft')

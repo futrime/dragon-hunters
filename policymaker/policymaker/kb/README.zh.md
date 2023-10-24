@@ -20,7 +20,9 @@ The knowledge base containing related knowledge of Minecraft.
 
 2023.10.5 增加了临时的 qa
 
-2023.10.23 增加了一系列新功能，支持任务迭代分解，具体代码及效果看单元测试及 test.txt
+2023.10.23 增加了一系列新功能，支持任务迭代分解，具体代码及效果看单元测试及 example.txt
+
+
 
 ## 基本使用示例
 
