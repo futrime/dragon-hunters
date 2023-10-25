@@ -20,7 +20,6 @@ export interface SerializedBot {
   readonly health: number;
   readonly food: number;
   readonly foodSaturation: number;
-  readonly oxygenLevel: number;
   readonly time: SerializedTime;
   readonly quickBarSlot: number;
   readonly isSleeping: boolean;
@@ -66,7 +65,7 @@ export interface SerializedEntity {
   readonly height: number;
   readonly width: number;
   readonly onGround: boolean;
-  readonly equipment: ReadonlyArray<SerializedItem>;
+  readonly equipment: ReadonlyArray<SerializedItem|undefined>;
   readonly health?: number;
   readonly food?: number;
   readonly foodSaturation?: number;
@@ -81,7 +80,7 @@ export interface SerializedItem {
   readonly count: number;
   readonly name: string;
   readonly maxDurability: number;
-  readonly durabilityUsed: number;
+  readonly durabilityUsed: number|null;
   readonly enchants: ReadonlyArray<{name: string; lvl: number;}>;
 }
 
@@ -141,7 +140,6 @@ function botToJson(bot: Bot): SerializedBot {
     health: bot.health,
     food: bot.food,
     foodSaturation: bot.foodSaturation,
-    oxygenLevel: bot.oxygenLevel,
     time: timeToJson(bot.time),
     quickBarSlot: bot.quickBarSlot,
     isSleeping: bot.isSleeping,

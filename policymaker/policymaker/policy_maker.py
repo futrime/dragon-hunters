@@ -24,5 +24,9 @@ class PolicyMaker:
         self._logger = logging.getLogger("policymaker")
 
     async def run(self):
-        await self._bot.run()
-        self._logger.info("bot is running")
+        await self._bot.start()
+
+        self._logger.debug(f"bot.get_status(): {await self._bot.get_status()}")
+        self._logger.debug(f"bot.observe(): {await self._bot.observe()}")
+
+        await self._bot.stop()

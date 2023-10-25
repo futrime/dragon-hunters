@@ -8,36 +8,32 @@ from policymaker import PolicyMaker
 
 
 async def main():
+    dotenv.load_dotenv()
+
+    setup_logging()
+
+    logging.info("starting...")
+
+    bot_host = os.environ.get("BOT_HOST", "127.0.0.1")
+    bot_port_str = os.environ.get("BOT_PORT", "8080")
+    openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+
+    # Check if the port is a valid integer
     try:
-        dotenv.load_dotenv()
+        bot_port = int(bot_port_str)
 
-        setup_logging()
+    except ValueError:
+        raise ValueError(f"invalid bot port: {bot_port_str}")
 
-        logging.info("starting...")
+    policy_maker = PolicyMaker(
+        {
+            "bot_host": bot_host,
+            "bot_port": bot_port,
+            "openai_api_key": openai_api_key,
+        }
+    )
 
-        bot_host = os.environ.get("BOT_HOST", "127.0.0.1")
-        bot_port_str = os.environ.get("BOT_PORT", "8080")
-        openai_api_key = os.environ.get("OPENAI_API_KEY", "")
-
-        # Check if the port is a valid integer
-        try:
-            bot_port = int(bot_port_str)
-
-        except ValueError:
-            raise ValueError(f"invalid bot port: {bot_port_str}")
-
-        policy_maker = PolicyMaker(
-            {
-                "bot_host": bot_host,
-                "bot_port": bot_port,
-                "openai_api_key": openai_api_key,
-            }
-        )
-
-        await policy_maker.run()
-
-    except Exception as e:
-        logging.exception(e)
+    await policy_maker.run()
 
 
 def setup_logging():
