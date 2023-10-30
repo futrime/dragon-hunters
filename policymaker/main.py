@@ -10,13 +10,18 @@ from policymaker import PolicyMaker
 async def main():
     dotenv.load_dotenv()
 
-    setup_logging()
-
-    logging.info("starting...")
-
     bot_host = os.environ.get("BOT_HOST", "127.0.0.1")
     bot_port_str = os.environ.get("BOT_PORT", "8080")
-    openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+    log_level = os.environ.get("LOG_LEVEL", "INFO")
+    openai_api_key = os.environ.get("OPENAI_API_KEY", None)
+    registry_address = os.environ.get("REGISTRY_ADDRESS", None)
+
+    setup_logging(log_level)
+
+    if openai_api_key is None:
+        raise ValueError("OPENAI_API_KEY environment variable not set")
+
+    logging.info("starting...")
 
     # Check if the port is a valid integer
     try:
@@ -36,23 +41,21 @@ async def main():
     await policy_maker.run()
 
 
-def setup_logging():
-    logging_level_str = os.environ.get("LOGGING_LEVEL", "INFO")
-
+def setup_logging(logging_level_str: str):
     if logging_level_str == "DEBUG":
-        logging_level = logging.DEBUG
+        log_level = logging.DEBUG
     elif logging_level_str == "INFO":
-        logging_level = logging.INFO
+        log_level = logging.INFO
     elif logging_level_str == "WARNING":
-        logging_level = logging.WARNING
+        log_level = logging.WARNING
     elif logging_level_str == "ERROR":
-        logging_level = logging.ERROR
+        log_level = logging.ERROR
     elif logging_level_str == "CRITICAL":
-        logging_level = logging.CRITICAL
+        log_level = logging.CRITICAL
     else:
         raise ValueError(f"invalid logging level: {logging_level_str}")
 
-    logging.basicConfig(level=logging_level)
+    logging.basicConfig(level=log_level)
 
 
 if __name__ == "__main__":
