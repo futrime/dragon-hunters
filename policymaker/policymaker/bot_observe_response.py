@@ -405,5 +405,5 @@ class Bot(TypedDict):
     blocksNearby: List[Block]
 
 
-class BotObserveResponseData(TypedDict):
+class BotObserveResponse(TypedDict):
     bot: Bot

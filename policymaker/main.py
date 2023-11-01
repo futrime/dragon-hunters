@@ -16,6 +16,8 @@ async def main():
     openai_api_key = os.environ.get("OPENAI_API_KEY", None)
     registry_address = os.environ.get("REGISTRY_ADDRESS", None)
 
+    # TODO: Connect to the registry.
+
     setup_logging(log_level)
 
     if openai_api_key is None:

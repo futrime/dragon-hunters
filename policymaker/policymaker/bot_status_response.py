@@ -6,5 +6,5 @@ JSON_SCHEMA = {
 }
 
 
-class BotStatusResponseData(TypedDict):
+class BotStatusResponse(TypedDict):
     pass
