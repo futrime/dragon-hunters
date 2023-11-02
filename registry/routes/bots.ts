@@ -2,7 +2,7 @@ import {faker} from '@faker-js/faker';
 import Ajv from 'ajv';
 import assert from 'assert';
 import consola from 'consola';
-import express, {RequestHandler} from 'express';
+import express from 'express';
 
 import {Bot} from '../lib/bot.js';
 
