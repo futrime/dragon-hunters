@@ -313,38 +313,38 @@ class Vec3(TypedDict):
     z: float
 
 
-class Biome(TypedDict):
+class BiomeInfo(TypedDict):
     name: str
     displayName: str | None
     rainfall: float
     temperature: float
 
 
-class Block(TypedDict):
+class BlockInfo(TypedDict):
     name: str
     displayName: str
 
 
-class Effect(TypedDict):
+class EffectInfo(TypedDict):
     id: int
     amplifier: float
     duration: float
 
 
-class Enchant(TypedDict):
+class EnchantInfo(TypedDict):
     name: str
     lvl: int
 
 
-class Item(TypedDict):
+class ItemInfo(TypedDict):
     count: int
     name: str
     maxDurability: NotRequired[float]
     durabilityUsed: float | None
-    enchants: List[Enchant]
+    enchants: List[EnchantInfo]
 
 
-class Entity(TypedDict):
+class EntityInfo(TypedDict):
     id: int
     displayName: str | None
     name: str | None
@@ -355,28 +355,28 @@ class Entity(TypedDict):
     height: float
     width: float
     onGround: bool
-    equipment: List[Item | None]
+    equipment: List[ItemInfo | None]
     health: float | None
     food: float | None
     foodSaturation: float | None
-    effects: List[Effect]
+    effects: List[EffectInfo]
 
 
-class Experience(TypedDict):
+class ExperienceInfo(TypedDict):
     level: int
     points: int
     progress: float
 
 
-class GameState(TypedDict):
+class GameStateInfo(TypedDict):
     dimension: str
 
 
-class Player(TypedDict):
+class PlayerInfo(TypedDict):
     username: str
 
 
-class Time(TypedDict):
+class TimeInfo(TypedDict):
     time: int
     timeOfDay: int
     day: int
@@ -385,25 +385,21 @@ class Time(TypedDict):
     age: float
 
 
-class Bot(TypedDict):
+class BotInfo(TypedDict):
     username: str
     version: str
-    entity: Entity
-    entities: List[Entity]
-    game: GameState
-    player: Player
-    players: List[Player]
+    entity: EntityInfo
+    entities: List[EntityInfo]
+    game: GameStateInfo
+    player: PlayerInfo
+    players: List[PlayerInfo]
     isRaining: bool
-    experience: Experience
+    experience: ExperienceInfo
     health: float
     food: float
     foodSaturation: float
-    time: Time
+    time: TimeInfo
     quickBarSlot: int
     isSleeping: bool
-    biome: Biome | None
-    blocksNearby: List[Block]
-
-
-class BotObserveResponse(TypedDict):
-    bot: Bot
+    biome: BiomeInfo | None
+    blocksNearby: List[BlockInfo]

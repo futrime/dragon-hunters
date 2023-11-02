@@ -93,22 +93,27 @@ class BotApiClient:
             path = f"/{path}"
 
         response_data: Any = None
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"http://{self._options['host']}:{self._options['port']}/api{path}"
-            ) as response:
-                response_data = await response.json()
 
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"http://{self._options['host']}:{self._options['port']}/api{path}"
+                ) as response:
+                    response_data = await response.json()
+        except Exception as e:
+            raise RuntimeError(f"error while getting from bot API: {e}")
+
+        # Validate the response format.
         try:
             jsonschema.validate(instance=response_data, schema=_GENERAL_SCHEMA)
         except jsonschema.ValidationError as e:
             raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
 
+        # If the API returned an error, raise a BotApiError.
         if "error" in response_data:
             raise BotApiError(
                 f"error from bot API: {response_data['error']['message']}"
             )
-
         else:
             return response_data["data"]
 
@@ -128,25 +133,30 @@ class BotApiClient:
             path = f"/{path}"
 
         response_data: Any = None
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"http://{self._options['host']}:{self._options['port']}/api{path}",
-                json={
-                    "apiVersion": _API_VERSION,
-                    "data": data,
-                },
-            ) as response:
-                response_data = await response.json()
 
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"http://{self._options['host']}:{self._options['port']}/api{path}",
+                    json={
+                        "apiVersion": _API_VERSION,
+                        "data": data,
+                    },
+                ) as response:
+                    response_data = await response.json()
+        except Exception as e:
+            raise RuntimeError(f"error while posting to bot API: {e}")
+
+        # Validate the response format.
         try:
             jsonschema.validate(instance=response_data, schema=_GENERAL_SCHEMA)
         except jsonschema.ValidationError as e:
             raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
 
+        # If the API returned an error, raise a BotApiError.
         if "error" in response_data:
             raise BotApiError(
                 f"error from bot API: {response_data['error']['message']}"
             )
-
         else:
             return response_data["data"]
