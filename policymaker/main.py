@@ -1,10 +1,30 @@
 import asyncio
 import logging
 import os
+from typing import Any, Tuple
 
+import aiohttp
 import dotenv
+import jsonschema
 
 from policymaker import PolicyMaker
+
+API_VERSION = "0.0.0"
+REGISTRY_POLICYMAKERS_POST_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "bot": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "ip": {"type": "string"},
+                "port": {"type": "integer"},
+            },
+        },
+        "ip": {"type": "string"},
+        "port": {"type": "integer"},
+    },
+}
 
 
 async def main():
@@ -16,7 +36,10 @@ async def main():
     openai_api_key = os.environ.get("OPENAI_API_KEY", None)
     registry_address = os.environ.get("REGISTRY_ADDRESS", None)
 
-    # TODO: Connect to the registry.
+    if registry_address is not None:
+        logging.info("getting bot host and port from registry...")
+        bot_host, bot_port = await get_from_registry(registry_address)
+        logging.info(f"got bot at {bot_host}")
 
     setup_logging(log_level)
 
@@ -43,7 +66,58 @@ async def main():
     await policy_maker.run()
 
 
+async def get_from_registry(registry_address: str) -> Tuple[str, int]:
+    """Get the bot host and port from the registry.
+
+    Args:
+        registry_address: The address of the registry.
+
+    Returns:
+        A tuple of the bot host and port.
+    """
+
+    response_data: Any = None
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{registry_address}/api/policymakers",
+                json={
+                    "apiVersion": API_VERSION,
+                    "data": {},
+                },
+            ) as response:
+                response_data = await response.json()
+    except Exception as e:
+        raise RuntimeError(f"error while getting from registry: {e}")
+
+    # Validate the response format.
+    try:
+        jsonschema.validate(
+            instance=response_data, schema=REGISTRY_POLICYMAKERS_POST_RESPONSE_SCHEMA
+        )
+    except jsonschema.ValidationError as e:
+        raise jsonschema.ValidationError(f"invalid response from registry: {e}")
+
+    # If the API returned an error, raise a RuntimeError.
+    if "error" in response_data:
+        raise RuntimeError(
+            f"error from registry API: {response_data['error']['message']}"
+        )
+    else:
+        return (
+            response_data["data"]["bot"]["ip"],
+            response_data["data"]["bot"]["port"],
+        )
+
+
 def setup_logging(logging_level_str: str):
+    """Setup the logging.
+
+    Args:
+        logging_level_str: The logging level as a string.
+    """
+
     if logging_level_str == "DEBUG":
         log_level = logging.DEBUG
     elif logging_level_str == "INFO":
