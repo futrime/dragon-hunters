@@ -26,6 +26,6 @@ class PolicyMaker:
     async def run(self):
         await self._bot.start()
 
-        self._logger.debug(f"bot.observe(): {await self._bot.observe()}")
+        # TODO: Implement the policy maker.
 
         await self._bot.stop()

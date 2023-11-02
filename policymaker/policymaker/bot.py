@@ -58,7 +58,7 @@ class Bot:
         if self._is_running:
             raise RuntimeError("bot is already running")
 
-        assert self._tasks.count == 0
+        assert len(self._tasks) == 0
 
         self._tasks.append(asyncio.create_task(self._update_status()))
 
