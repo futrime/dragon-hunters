@@ -6,14 +6,41 @@ from typing import Any, Dict, List, TypedDict
 import jsonschema
 
 from .bot_api_client import BotApiClient
-from .bot_jobs_response import GET_JSON_SCHEMA as BOT_JOBS_GET_RESPONSE_DATA_JSON_SCHEMA
-from .bot_jobs_response import (
+from .bot_api_response_actions import (
+    GET_JSON_SCHEMA as BOT_ACTIONS_GET_RESPONSE_DATA_JSON_SCHEMA,
+)
+from .bot_api_response_actions import (
+    POST_JSON_SCHEMA as BOT_ACTIONS_POST_RESPONSE_DATA_JSON_SCHEMA,
+)
+from .bot_api_response_actions import ActionInfo
+from .bot_api_response_jobs import (
+    GET_JSON_SCHEMA as BOT_JOBS_GET_RESPONSE_DATA_JSON_SCHEMA,
+)
+from .bot_api_response_jobs import (
     POST_JSON_SCHEMA as BOT_JOBS_POST_RESPONSE_DATA_JSON_SCHEMA,
 )
-from .bot_jobs_response import JobInfo
-from .bot_observe_response import JSON_SCHEMA as BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA
-from .bot_observe_response import BotInfo
-from .bot_status_response import JSON_SCHEMA as BOT_STATUS_RESPONSE_DATA_JSON_SCHEMA
+from .bot_api_response_jobs import JobInfo
+from .bot_api_response_observe import (
+    JSON_SCHEMA as BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA,
+)
+from .bot_api_response_observe import BotInfo
+from .bot_api_response_status import JSON_SCHEMA as BOT_STATUS_RESPONSE_DATA_JSON_SCHEMA
+
+
+class ActionCreationParameter(TypedDict):
+    """A parameter of creating an action.
+
+    Attributes:
+        name: The name of the parameter.
+        description: The description of the parameter.
+        type: The type of the parameter.
+        variable: The variable to be replaced with the value of the parameter. Should start with "$".
+    """
+
+    name: str
+    type: str
+    description: str
+    variable: str
 
 
 class BotOptions(TypedDict):
@@ -93,6 +120,90 @@ class Bot:
         response = BotInfo(response_data["bot"])
 
         return response
+
+    async def create_action(
+        self,
+        name: str,
+        description: str,
+        parameters: List[ActionCreationParameter],
+        program: object,
+    ):
+        """Creates a composite action.
+
+        Args:
+            name: The name of the action.
+            description: The description of the action.
+            parameters: The parameters of the action.
+            program: The program of the action.
+        """
+
+        # Check duplicate parameter names
+        if len({parameter["name"] for parameter in parameters}) != len(parameters):
+            raise ValueError("duplicate parameter names")
+
+        response_data = await self._api_client.post(
+            "/actions",
+            {
+                "name": name,
+                "description": description,
+                "parameters": [
+                    {
+                        "name": parameter["name"],
+                        "description": parameter["description"],
+                        "type": parameter["type"],
+                        "variable": parameter["variable"],
+                    }
+                    for parameter in parameters
+                ],
+                "program": program,
+            },
+        )
+
+        jsonschema.validate(
+            instance=response_data, schema=BOT_ACTIONS_POST_RESPONSE_DATA_JSON_SCHEMA
+        )
+
+    async def get_actions(self) -> Dict[str, ActionInfo]:
+        """Gets all actions.
+
+        Returns:
+            The actions.
+        """
+
+        response_data = await self._api_client.get("/actions")
+
+        jsonschema.validate(
+            instance=response_data, schema=BOT_ACTIONS_GET_RESPONSE_DATA_JSON_SCHEMA
+        )
+
+        # No duplicate names
+        assert len({action["name"] for action in response_data["items"]}) == len(
+            response_data["items"]
+        )
+
+        # No duplicate parameter names of each action
+        for action in response_data["items"]:
+            assert len(
+                {parameter["name"] for parameter in action["parameters"]}
+            ) == len(action["parameters"])
+
+        return {
+            action["name"]: ActionInfo(
+                {
+                    "name": action["name"],
+                    "description": action["description"],
+                    "parameters": {
+                        parameter["name"]: {
+                            "name": parameter["name"],
+                            "description": parameter["description"],
+                            "type": parameter["type"],
+                        }
+                        for parameter in action["parameters"]
+                    },
+                }
+            )
+            for action in response_data["items"]
+        }
 
     async def create_job(self, action: str, args: Dict[str, Any]) -> str:
         """Creates a job.
