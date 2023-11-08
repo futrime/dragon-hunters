@@ -1,4 +1,4 @@
-import {Arg} from './arg';
+import {Arg} from './arg.js';
 
 export interface Parameter {
   readonly name: string;
