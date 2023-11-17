@@ -1,6 +1,7 @@
 import { Block } from "prismarine-block";
 import { Vec3 } from "vec3";
 
+import assert from "assert";
 import { Arg } from "../arg.js";
 import { Bot } from "../bot.js";
 import { doArgArrayMatchParameterArray, Parameter } from "../parameter.js";
@@ -79,24 +80,21 @@ export class CraftItemActionInstance extends ActionInstance {
   }
 
   private async runCraftItem(): Promise<void> {
-    // const position = this.bot.mineflayerBot.entity.position;
 
     const craftingTable: Block | null = this.bot.mineflayerBot.blockAt(
       new Vec3(this.craftingTableX, this.craftingTableY, this.craftingTableZ)
     );
 
     if (craftingTable === null || craftingTable.name !== "crafting_table") {
-      this.fail("Target block is not a crafting table!");
+      return this.fail("Target block is not a crafting table!");
     }
 
     const itemByName = this.bot.mcdata.itemsByName[this.itemName];
     if (itemByName === undefined) {
-      this.fail("Item to be crafted not found!");
+      return this.fail("Item to be crafted not found!");
     }
-    console.log(itemByName);
-    console.log(craftingTable);
 
-    this.bot.mineflayerBot.lookAt(craftingTable!.position);
+    await this.bot.mineflayerBot.lookAt(craftingTable!.position);
 
     const recipe = this.bot.mineflayerBot.recipesFor(
       itemByName.id,
@@ -104,12 +102,23 @@ export class CraftItemActionInstance extends ActionInstance {
       1,
       craftingTable
     );
-    console.log(recipe);
+    // console.log(recipe);
     if (recipe.length > 0) {
-      await this.bot.mineflayerBot.craft(recipe[0], this.count, craftingTable!);
-    }
-    else{
-      throw new Error("Cannot craft the item because the recipe not found!")
+      try {
+        await this.bot.mineflayerBot.craft(
+          recipe[0],
+          this.count,
+          craftingTable!
+        );
+        // this.bot.mineflayerBot.chat(`did the recipe for ${itemByName} ${this.count} times`);
+        return this.succeed();
+      } catch (err) {
+        assert(err instanceof Error);
+        // this.bot.mineflayerBot.chat(`error making ${itemByName}`);
+        return this.fail(err.message);
+      }
+    } else {
+      return this.fail("Cannot craft the item because the recipe not found!");
     }
   }
 }

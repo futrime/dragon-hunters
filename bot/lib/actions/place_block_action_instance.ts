@@ -1,5 +1,6 @@
 import assert from "assert";
 import pathfinderModule from "mineflayer-pathfinder";
+import { Vec3 } from "vec3";
 
 import { Arg } from "../arg.js";
 import { Bot } from "../bot.js";
@@ -12,18 +13,23 @@ const ACTION_NAME = "PlaceBlock";
 const PARAMETERS: ReadonlyArray<Parameter> = [
   {
     name: "x",
-    description: "X coordinate",
+    description: "X coordinate of the block you want to place",
     type: "number",
   },
   {
     name: "y",
-    description: "Y coordinate",
+    description: "Y coordinate of the block you want to place",
     type: "number",
   },
   {
     name: "z",
-    description: "Z coordinate",
+    description: "Z coordinate of the block you want to place",
     type: "number",
+  },
+  {
+    name: "blockName",
+    description: "The name of the block",
+    type: "string",
   },
 ];
 
@@ -32,9 +38,6 @@ export class PlaceBlockActionInstance extends ActionInstance {
   private readonly y: number;
   private readonly z: number;
   private readonly blockName: string;
-
-  private onGoalReachedBound = this.onGoalReached.bind(this);
-  private onPathUpdateBound = this.onPathUpdate.bind(this);
 
   constructor(id: string, args: ReadonlyArray<Arg>, bot: Bot) {
     super(id, ACTION_NAME, args, bot);
@@ -50,81 +53,80 @@ export class PlaceBlockActionInstance extends ActionInstance {
   }
 
   override get canPause(): boolean {
-    return true;
+    return false;
   }
 
-  override async cancelRun(): Promise<void> {
-    await this.stopPathfinding();
-  }
+  override async cancelRun(): Promise<void> {}
 
   override async pauseRun(): Promise<void> {
-    await this.stopPathfinding();
+    throw new Error(`cannot pause ${this.actionName} instance`);
   }
 
   override async resumeRun(): Promise<void> {
-    await this.startPathfinding();
+    throw new Error(`cannot resume ${this.actionName} instance`);
   }
 
   override async startRun(): Promise<void> {
-    await this.startPathfinding();
+    // wait for next tick to guarantee that the job is ready
+    setImmediate(() => {
+      this.startPlacingBlock();
+    });
   }
 
-  private async onGoalReached(): Promise<void> {
-    await this.stopPathfinding();
+  private async startPlacingBlock(): Promise<void> {
+    try {
+      // Check if the block is in the inventory
+      const block = this.bot.mineflayerBot.inventory.items().find((item) => {
+        return item.name === this.blockName;
+      });
+      // If the block is not in the inventory, throw an error
+      if (!block) {
+        return this.fail("Block not found in inventory");
+      }
 
-    return this.succeed();
-  }
+      // Swap the block to the main hand
+      await this.bot.mineflayerBot.equip(block, "hand");
 
-  private async onPathUpdate(result: { status: string }): Promise<void> {
-    if (result.status !== "noPath" && result.status !== "timeout") {
-      return;
+      // Place the block
+      // Tranverse 6 faces of the target position
+      const directions: Array<Vec3> = [
+        new Vec3(1, 0, 0),
+        new Vec3(-1, 0, 0),
+        new Vec3(0, 1, 0),
+        new Vec3(0, -1, 0),
+        new Vec3(0, 0, 1),
+        new Vec3(0, 0, -1),
+      ];
+
+      for (let i: number = 0; i < directions.length; i++) {
+        const direction = directions[i];
+
+        const neighborBlock = this.bot.mineflayerBot.blockAt(
+          new Vec3(this.x, this.y, this.z).plus(direction)
+        );
+
+        const reverseDirection = direction.scaled(-1);
+
+        if (neighborBlock && neighborBlock.name !== "air") {
+          // Look at the middle of the neighbor block
+          await this.bot.mineflayerBot.lookAt(
+            neighborBlock.position.plus(reverseDirection.scaled(0.5))
+          );
+
+          // Place block
+          await this.bot.mineflayerBot.placeBlock(
+            neighborBlock,
+            reverseDirection
+          );
+          return this.succeed();
+        }
+      }
+      return this.fail(
+        `Block ${this.blockName} cannot be placed at (${this.x}, ${this.y}, ${this.z})`
+      );
+    } catch (error) {
+      assert(error instanceof Error);
+      return this.fail(error.message);
     }
-
-    let reason: string;
-    switch (result.status) {
-      case "noPath":
-        reason = "cannot find a path to the goal";
-        break;
-
-      case "timeout":
-        reason = "take too long to find a path to the goal";
-        break;
-
-      default:
-        assert.fail("unreachable");
-    }
-
-    await this.stopPathfinding();
-
-    return this.fail(reason);
-  }
-
-  private async startPathfinding(): Promise<void> {
-    if (
-      this.onGoalReachedBound !== undefined ||
-      this.onPathUpdateBound !== undefined
-    ) {
-      throw new Error("pathfinding already started");
-    }
-
-    const goal = new pathfinderModule.goals.GoalBlock(this.x, this.y, this.z);
-    this.bot.mineflayerBot.pathfinder.setGoal(goal);
-
-    this.bot.mineflayerBot.on("goal_reached", this.onGoalReachedBound);
-    this.bot.mineflayerBot.on("path_update", this.onPathUpdateBound);
-  }
-
-  private async stopPathfinding(): Promise<void> {
-    if (
-      this.onGoalReachedBound === undefined ||
-      this.onPathUpdateBound === undefined
-    ) {
-      throw new Error("pathfinding not started");
-    }
-
-    this.bot.mineflayerBot.off("goal_reached", this.onGoalReachedBound);
-    this.bot.mineflayerBot.off("path_update", this.onPathUpdateBound);
-
-    this.bot.mineflayerBot.pathfinder.setGoal(null);
   }
 }

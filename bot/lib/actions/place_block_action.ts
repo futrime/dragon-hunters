@@ -13,17 +13,17 @@ const DESCRIPTION = "Place a block";
 const PARAMETERS: ReadonlyArray<Parameter> = [
   {
     name: "x",
-    description: "X coordinate",
+    description: "X coordinate of the block you want to place",
     type: "number",
   },
   {
     name: "y",
-    description: "Y coordinate",
+    description: "Y coordinate of the block you want to place",
     type: "number",
   },
   {
     name: "z",
-    description: "Z coordinate",
+    description: "Z coordinate of the block you want to place",
     type: "number",
   },
   {
