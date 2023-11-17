@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import List, TypedDict
 
 from openai import AsyncOpenAI
@@ -22,6 +23,7 @@ class Agent:
 
         self._bot: Bot = bot
         self._is_running: bool = False
+        self._logger = logging.getLogger("agent")
         self._openai_client: AsyncOpenAI = AsyncOpenAI(
             api_key=self._options["openai_api_key"]
         )
@@ -51,4 +53,17 @@ class Agent:
         self._is_running = False
 
     async def _run(self):
-        """Runs the agent."""
+        while True:
+            await asyncio.sleep(1)
+
+            chat_completion = await self._openai_client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "Hello, I'm a bot.",
+                    }
+                ],
+                model="gpt-3.5-turbo",
+            )
+
+            self._logger.info(chat_completion)

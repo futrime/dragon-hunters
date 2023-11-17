@@ -113,26 +113,6 @@ class Bot:
 
         self._is_running = False
 
-    async def observe(self) -> BotInfo:
-        """Observes the world
-
-        Returns:
-            The bot's observation of the world.
-        """
-
-        if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
-
-        response_data = await self._api_client.post("/observe", {})
-
-        jsonschema.validate(
-            instance=response_data, schema=BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA
-        )
-
-        response = BotInfo(response_data["bot"])
-
-        return response
-
     async def create_action(
         self,
         name: str,
@@ -343,6 +323,52 @@ class Bot:
 
         await self._api_client.post(f"/jobs/{job}/cancel", {})
 
+    async def observe(self) -> BotInfo:
+        """Observes the world
+
+        Returns:
+            The bot's observation of the world.
+        """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+
+        response_data = await self._api_client.post("/observe", {})
+
+        jsonschema.validate(
+            instance=response_data, schema=BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA
+        )
+
+        response = BotInfo(response_data["bot"])
+
+        return response
+
+    def on_event(self, event: str, handler: Callable[[EventInfo], Coroutine]):
+        """Registers an event handler.
+
+        Args:
+            event: The name of the event.
+            handler: The event handler.
+        """
+
+        if event not in self._event_handlers:
+            self._event_handlers[event] = []
+
+        self._event_handlers[event].append(handler)
+
+    def off_event(self, event: str, handler: Callable[[EventInfo], Coroutine]):
+        """Unregisters an event handler.
+
+        Args:
+            event: The name of the event.
+            handler: The event handler.
+        """
+
+        if event not in self._event_handlers:
+            return
+
+        self._event_handlers[event].remove(handler)
+
     async def _update_events(self):
         # A datetime DateTime of the last update
         last_updated: datetime = datetime.now()
@@ -380,10 +406,20 @@ class Bot:
                 if updated > last_updated:
                     last_updated = updated
 
+                event_info = EventInfo(
+                    {
+                        "id": event["id"],
+                        "name": event["name"],
+                        "description": event["description"],
+                        "args": {arg["name"]: arg["value"] for arg in event["args"]},
+                        "updated": event["updated"],
+                    }
+                )
+
                 # Invoke the event handler.
                 event_handlers = self._event_handlers.get(event["name"], [])
                 for event_handler in event_handlers:
-                    await event_handler(event)
+                    await event_handler(event_info)
 
     async def _update_status(self):
         while True:
