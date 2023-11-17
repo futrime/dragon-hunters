@@ -8,35 +8,39 @@ import { Bot } from "../../lib/bot.js";
 
 export const router = express.Router();
 
-let updated = new Date();
-
 router.route("/").get((req, res) => {
   try {
     const bot: Bot = req.app.locals.bot;
-    const since = req.query.since;
+    const since: string = req.query.since as string;
 
     if (since) {
       // if exists param: since
       // check?
       const events = bot.getEvents();
 
+      const sinceDate = new Date(since); // 解析 since 参数为日期对象
+
       return res.status(200).send({
         apiVersion: "0.0.0",
         data: {
-          items: events.map((event) => {
-            return {
-              id: event.id,
-              name: event.name,
-              description: event.description,
-              updated: updated.toISOString(),
-              args: event.args,
-            };
-          }),
+          items: events
+            .filter((event) => new Date(event.updatedTime) > sinceDate) // 过滤更新时间在 since 之后的事件
+            .map((event) => {
+              return {
+                id: event.id,
+                name: event.name,
+                description: event.description,
+                updated: new Date(event.updatedTime).toISOString(),
+                args: event.args,
+              };
+            }),
         },
       });
     } else {
       // not have 'since'
-      throw new Error("params must contain 'since'");
+      throw new Error(
+        "params must contain 'since' or 'since' cannot be parsed as string."
+      );
     }
   } catch (error) {
     assert(error instanceof Error);
