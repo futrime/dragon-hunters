@@ -2,9 +2,8 @@ import asyncio
 import logging
 from typing import List, TypedDict
 
-from openai import AsyncOpenAI
-
 from .bot import Bot
+from .gpt35turbo_wrapper import GPT35TurboWrapper
 
 
 class AgentOptions(TypedDict):
@@ -24,9 +23,7 @@ class Agent:
         self._bot: Bot = bot
         self._is_running: bool = False
         self._logger = logging.getLogger("agent")
-        self._openai_client: AsyncOpenAI = AsyncOpenAI(
-            api_key=self._options["openai_api_key"]
-        )
+        self._model = GPT35TurboWrapper(options["openai_api_key"])
         self._tasks: List[asyncio.Task] = []
 
     async def start(self):
@@ -56,14 +53,6 @@ class Agent:
         while True:
             await asyncio.sleep(1)
 
-            chat_completion = await self._openai_client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": "Hello, I'm a bot.",
-                    }
-                ],
-                model="gpt-3.5-turbo",
-            )
+            answer = await self._model.ask("Hello, how are you?")
 
-            self._logger.info(chat_completion)
+            self._logger.info(answer)
