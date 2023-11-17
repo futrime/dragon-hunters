@@ -42,6 +42,7 @@ GET_JSON_SCHEMA = {
             "items": JOB_JSON_SCHEMA,
         },
     },
+    "required": ["items"],
 }
 
 

@@ -31,6 +31,7 @@ GET_JSON_SCHEMA = {
             "items": ACTION_JSON_SCHEMA,
         },
     },
+    "required": ["items"],
 }
 
 

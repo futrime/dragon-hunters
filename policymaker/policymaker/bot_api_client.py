@@ -1,9 +1,10 @@
+import urllib.parse
 from typing import Any, Dict, TypedDict
 
 import aiohttp
 import jsonschema
 
-from policymaker.bot_api_error import BotApiError
+from .bot_api_error import BotApiError
 
 _API_VERSION = "0.0.0"
 
@@ -78,7 +79,7 @@ class BotApiClient:
 
         self._options: BotApiClientOptions = options
 
-    async def get(self, path: str) -> Dict[str, Any]:
+    async def get(self, path: str, queries: Dict[str, str] = {}) -> Dict[str, Any]:
         """Gets a resource from the bot API.
 
         Args:
@@ -92,12 +93,18 @@ class BotApiClient:
         if not path.startswith("/"):
             path = f"/{path}"
 
+        # URL encode the queries.
+        queries = {
+            k: urllib.parse.quote(v) for k, v in queries.items() if v is not None
+        }
+
         response_data: Any = None
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f"http://{self._options['host']}:{self._options['port']}/api{path}"
+                    f"http://{self._options['host']}:{self._options['port']}/api{path}",
+                    params=queries,
                 ) as response:
                     response_data = await response.json()
         except Exception as e:

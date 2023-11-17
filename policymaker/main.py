@@ -63,7 +63,10 @@ async def main():
         }
     )
 
-    await policy_maker.run()
+    await policy_maker.start()
+
+    # Wait for all tasks to finish.
+    await asyncio.wait(asyncio.all_tasks())
 
 
 async def get_from_registry(registry_address: str) -> Tuple[str, int]:

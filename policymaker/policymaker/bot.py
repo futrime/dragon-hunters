@@ -1,7 +1,8 @@
 import asyncio
 import copy
 import logging
-from typing import Any, Dict, List, TypedDict
+from datetime import datetime
+from typing import Any, Callable, Coroutine, Dict, List, TypedDict
 
 import jsonschema
 
@@ -13,6 +14,8 @@ from .bot_api_response_actions import (
     POST_JSON_SCHEMA as BOT_ACTIONS_POST_RESPONSE_DATA_JSON_SCHEMA,
 )
 from .bot_api_response_actions import ActionInfo
+from .bot_api_response_events import JSON_SCHEMA as BOT_EVENTS_RESPONSE_DATA_JSON_SCHEMA
+from .bot_api_response_events import EventInfo
 from .bot_api_response_jobs import (
     GET_JSON_SCHEMA as BOT_JOBS_GET_RESPONSE_DATA_JSON_SCHEMA,
 )
@@ -58,7 +61,9 @@ class BotOptions(TypedDict):
 class Bot:
     """A bot that can be run."""
 
-    STATE_UPDATE_INTERVAL: float = 0.1
+    BOT_NOT_RUNNING_ERROR_MESSAGE: str = "bot is not running"
+    UPDAVE_EVENTS_INTERVAL: float = 0.1
+    UPDATE_STATUS_INTERVAL: float = 0.1
 
     def __init__(self, options: BotOptions):
         """Initialize a bot.
@@ -75,6 +80,9 @@ class Bot:
                 "port": self._options["port"],
             }
         )
+        self._event_handlers: Dict[
+            str, List[Callable[[EventInfo], Coroutine[Any, Any, None]]]
+        ] = {}
         self._is_running: bool = False
         self._logger = logging.getLogger("bot")
         self._tasks: List[asyncio.Task] = []
@@ -87,6 +95,7 @@ class Bot:
 
         assert len(self._tasks) == 0
 
+        self._tasks.append(asyncio.create_task(self._update_events()))
         self._tasks.append(asyncio.create_task(self._update_status()))
 
         self._is_running = True
@@ -95,7 +104,7 @@ class Bot:
         """Stops the bot."""
 
         if not self._is_running:
-            raise RuntimeError("bot is not running")
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         for task in self._tasks:
             task.cancel()
@@ -110,6 +119,9 @@ class Bot:
         Returns:
             The bot's observation of the world.
         """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.post("/observe", {})
 
@@ -136,6 +148,9 @@ class Bot:
             parameters: The parameters of the action.
             program: The program of the action.
         """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         # Check duplicate parameter names
         if len({parameter["name"] for parameter in parameters}) != len(parameters):
@@ -169,6 +184,9 @@ class Bot:
         Returns:
             The actions.
         """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.get("/actions")
 
@@ -216,6 +234,9 @@ class Bot:
             The ID of the created job.
         """
 
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+
         response_data = await self._api_client.post(
             "/jobs",
             {
@@ -242,6 +263,9 @@ class Bot:
         Returns:
             The jobs.
         """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.get("/jobs")
 
@@ -278,6 +302,9 @@ class Bot:
             job: The ID of the job to start.
         """
 
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+
         await self._api_client.post(f"/jobs/{job}/start", {})
 
     async def pause_job(self, job: str):
@@ -286,6 +313,9 @@ class Bot:
         Args:
             job: The ID of the job to pause.
         """
+
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         await self._api_client.post(f"/jobs/{job}/pause", {})
 
@@ -296,6 +326,9 @@ class Bot:
             job: The ID of the job to resume.
         """
 
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+
         await self._api_client.post(f"/jobs/{job}/resume", {})
 
     async def cancel_job(self, job: str):
@@ -305,11 +338,56 @@ class Bot:
             job: The ID of the job to cancel.
         """
 
+        if not self._is_running:
+            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+
         await self._api_client.post(f"/jobs/{job}/cancel", {})
+
+    async def _update_events(self):
+        # A datetime DateTime of the last update
+        last_updated: datetime = datetime.now()
+
+        while True:
+            await asyncio.sleep(Bot.UPDAVE_EVENTS_INTERVAL)
+
+            try:
+                response_data = await self._api_client.get(
+                    "/events",
+                    {
+                        "since": last_updated.isoformat(),
+                    },
+                )
+
+            except Exception as e:
+                self._logger.error(f"Failed to update events: {e}")
+                continue
+
+            try:
+                jsonschema.validate(
+                    instance=response_data, schema=BOT_EVENTS_RESPONSE_DATA_JSON_SCHEMA
+                )
+
+            except jsonschema.ValidationError as e:
+                raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
+
+            # Invoke the events.
+            for event in response_data["items"]:
+                # Allow other tasks to run.
+                await asyncio.sleep(0)
+
+                # Update the last updated time if the event is newer.
+                updated = datetime.fromisoformat(event["updated"])
+                if updated > last_updated:
+                    last_updated = updated
+
+                # Invoke the event handler.
+                event_handlers = self._event_handlers.get(event["name"], [])
+                for event_handler in event_handlers:
+                    await event_handler(event)
 
     async def _update_status(self):
         while True:
-            await asyncio.sleep(Bot.STATE_UPDATE_INTERVAL)
+            await asyncio.sleep(Bot.UPDATE_STATUS_INTERVAL)
 
             try:
                 response_data = await self._api_client.get("/status")
