@@ -2,6 +2,8 @@ import asyncio
 import logging
 from typing import List, TypedDict
 
+from policymaker.prompt_yield_jobs import PromptYieldJobs
+
 from .bot import Bot
 from .gpt35turbo_wrapper import GPT35TurboWrapper
 
@@ -53,6 +55,16 @@ class Agent:
         while True:
             await asyncio.sleep(1)
 
-            answer = await self._model.ask("Hello, how are you?")
+            game_info = await self._bot.observe()
+
+            self._logger.info("game info")
+
+            prompt = await PromptYieldJobs().generate(
+                game_info=str(game_info["blocksNearby"])
+            )
+
+            self._logger.info(prompt)
+
+            answer = await self._model.ask(prompt)
 
             self._logger.info(answer)
