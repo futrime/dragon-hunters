@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Dict, TypedDict
 
 import jsonschema
 
@@ -8,6 +8,13 @@ class Response(ABC):
     """Abstract base class for all responses from the bot API."""
 
     def __init__(self, data: Dict, json_schema: Dict):
+        """Initialize the response.
+
+        Args:
+            data: the response data
+            json_schema: the JSON schema for validating the response data
+        """
+
         # Validate the response format.
         try:
             jsonschema.validate(instance=data, schema=json_schema)
@@ -18,7 +25,11 @@ class Response(ABC):
         self._data = data
 
     @abstractmethod
-    def data(self) -> Any:
-        """Return the response data."""
+    def data(self) -> TypedDict:
+        """Return the response data.
 
-        pass
+        Returns:
+            The response data
+        """
+
+        raise NotImplementedError

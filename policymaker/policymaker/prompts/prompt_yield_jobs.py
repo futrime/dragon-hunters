@@ -1,3 +1,5 @@
+from typing import Any, Dict, TypedDict
+
 from .prompt import Prompt
 
 
@@ -13,14 +15,14 @@ You can use the information to make decisions.
 </information>
 """
 
-    async def generate(self, game_info: str) -> str:
-        """Generate a prompt
+    async def generate(self, **kwargs) -> str:
+        return PromptYieldJobs.PROMPT_TEMPLATE.format(game_info=kwargs["game_info"])
 
-        Args:
-            **kwargs: replacement values for the prompt
+    async def parse_answer(self, answer: str) -> TypedDict:
+        return Answer()
 
-        Returns:
-            The prompt
-        """
 
-        return PromptYieldJobs.PROMPT_TEMPLATE.format(game_info=game_info)
+class Answer(TypedDict):
+    """Answer to the prompt"""
+
+    pass

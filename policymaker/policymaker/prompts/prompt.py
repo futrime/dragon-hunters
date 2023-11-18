@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import TypedDict
 
 
 class Prompt(ABC):
     """Abstract class for prompts"""
 
     @abstractmethod
-    async def generate(self, **kwargs) -> str:
+    def generate(self, **kwargs) -> str:
         """Generate a prompt
 
         Args:
@@ -13,6 +14,19 @@ class Prompt(ABC):
 
         Returns:
             The prompt
+        """
+
+        raise NotImplementedError
+
+    @abstractmethod
+    def parse_answer(self, answer: str) -> TypedDict:
+        """Parse an answer
+
+        Args:
+            answer: the answer to parse
+
+        Returns:
+            The parsed answer
         """
 
         raise NotImplementedError
