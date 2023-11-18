@@ -96,6 +96,8 @@ export class FurnaceActionInstance extends ActionInstance {
   private async startFurnacing(): Promise<void> {
     try {
       // Check if the input item is in the inventory
+      console.log(this.bot.mineflayerBot.inventory.items());
+
       const inputItem = this.bot.mineflayerBot.inventory
         .items()
         .find((item) => {
@@ -109,7 +111,7 @@ export class FurnaceActionInstance extends ActionInstance {
       }
       if (inputItem.count < this.inputItemCount) {
         return this.fail(
-          `Fuel ${this.inputItemName} is not enough in the inventory`
+          `inputItem ${this.inputItemName} is not enough in the inventory`
         );
       }
 
@@ -153,7 +155,9 @@ export class FurnaceActionInstance extends ActionInstance {
         );
       }
       // Check if the furnace is empty
-      if (!furnace.inputItem() || !furnace.fuelItem()) {
+      // console.log(furnace.fuelItem());
+
+      if (null !== furnace.inputItem() || null !== furnace.fuelItem()) {
         return this.fail(
           `Furnace at (${this.x}, ${this.y}, ${this.z}) is not empty`
         );
@@ -170,6 +174,7 @@ export class FurnaceActionInstance extends ActionInstance {
       //     resolve();
       //   });
       // });
+      return this.succeed();
     } catch (error) {
       assert(error instanceof Error);
       return this.fail(error.message);

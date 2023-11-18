@@ -108,16 +108,87 @@ export class PlaceBlockActionInstance extends ActionInstance {
         const reverseDirection = direction.scaled(-1);
 
         if (neighborBlock && neighborBlock.name !== "air") {
-          // Look at the middle of the neighbor block
-          await this.bot.mineflayerBot.lookAt(
-            neighborBlock.position.plus(reverseDirection.scaled(0.5))
-          );
+          // Look at the middle of the neighbor block (deprecated: no need to look at the block)
+          // await this.bot.mineflayerBot.lookAt(
+          //   neighborBlock.position.plus(reverseDirection.scaled(0.5))
+          // );
 
           // Place block
           await this.bot.mineflayerBot.placeBlock(
             neighborBlock,
             reverseDirection
           );
+
+          // // TEST: Build a block wall
+          // for (let y = 0; y < 20; y++) {
+          //   const block = this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(0, y, 0)
+          //   );
+          //   console.log(block?.position);
+          //   if (block !== null)
+          //     await this.bot.mineflayerBot.placeBlock(block, new Vec3(0, 1, 0));
+          // }
+
+          // // TEST: Build a nether door
+          // await this.bot.mineflayerBot.placeBlock(
+          //   neighborBlock,
+          //   reverseDirection
+          // );
+          // for (let x = 0; x <= 2; x++) {
+          //   const block = this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(x, 1, 0)
+          //   );
+          //   console.log(block?.position);
+          //   if (block !== null)
+          //     await this.bot.mineflayerBot.placeBlock(block, new Vec3(1, 0, 0));
+          // }
+
+          // for (let y = 0; y <= 3; y++) {
+          //   const block = this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(0, y + 1, 0)
+          //   );
+          //   console.log(block?.position);
+          //   if (block !== null)
+          //     await this.bot.mineflayerBot.placeBlock(block, new Vec3(0, 1, 0));
+          // }
+
+          // for (let x = 0; x <= 2; x++) {
+          //   const block = this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(x, 5, 0)
+          //   );
+          //   console.log(block?.position);
+          //   if (block !== null)
+          //     await this.bot.mineflayerBot.placeBlock(block, new Vec3(1, 0, 0));
+          // }
+
+          // for (let y = 0; y <= 2; y++) {
+          //   const block = this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(3, y + 1, 0)
+          //   );
+          //   console.log(block?.position);
+          //   if (block !== null)
+          //     await this.bot.mineflayerBot.placeBlock(block, new Vec3(0, 1, 0));
+          // }
+
+          // // swap the flint and steel to the main hand
+          // const flintAndSteel = this.bot.mineflayerBot.inventory
+          //   .items()
+          //   .find((item) => {
+          //     return item.name === "flint_and_steel";
+          //   });
+          // if (!flintAndSteel) {
+          //   return this.fail("Flint and steel not found in inventory");
+          // }
+          // await this.bot.mineflayerBot.equip(flintAndSteel, "hand");
+
+          // // light the portal
+          // await this.bot.mineflayerBot.placeBlock(
+          //   this.bot.mineflayerBot.blockAt(
+          //     neighborBlock.position.offset(1, 1, 0)
+          //   )!,
+          //   new Vec3(0, 1, 0)
+          // );
+
           return this.succeed();
         }
       }

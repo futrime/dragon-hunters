@@ -13,12 +13,15 @@ import { GoToAction } from "./lib/actions/go_to_action.js";
 import { Bot } from "./lib/bot.js";
 import { CraftItemAction } from "./lib/actions/craft_item_action.js";
 import { PlaceBlockAction } from "./lib/actions/place_block_action.js";
+import { FurnaceAction } from "./lib/actions/furnace_action.js";
+import { TakeItemFromFurnaceAction } from "./lib/actions/take_item_from_furnace_action.js";
 
 import { router as routerBotsActions } from "./routes/bots/actions.js";
 import { router as routerBotsJobs } from "./routes/bots/jobs.js";
 import { router as routerBotsObserve } from "./routes/bots/observe.js";
 import { router as routerBotsStatus } from "./routes/bots/status.js";
 import { router as routerBotsEvents } from "./routes/bots/events.js";
+import { Furnace } from "mineflayer";
 
 main().catch((error) => {
   consola.error(`process exited with error: ${error.message}`);
@@ -168,4 +171,6 @@ function setupPredefinedActions(bot: Bot) {
   bot.addAction(new ExploreUntilAction());
   bot.addAction(new CraftItemAction());
   bot.addAction(new PlaceBlockAction());
+  bot.addAction(new FurnaceAction());
+  bot.addAction(new TakeItemFromFurnaceAction());
 }
