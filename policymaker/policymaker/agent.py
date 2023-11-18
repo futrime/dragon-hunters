@@ -2,10 +2,9 @@ import asyncio
 import logging
 from typing import List, TypedDict
 
-from policymaker.prompt_yield_jobs import PromptYieldJobs
-
 from .bot import Bot
-from .gpt35turbo_wrapper import GPT35TurboWrapper
+from .models.gpt35turbo_wrapper import GPT35TurboWrapper
+from .prompts.prompt_yield_jobs import PromptYieldJobs
 
 
 class AgentOptions(TypedDict):

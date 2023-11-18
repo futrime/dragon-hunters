@@ -1,6 +1,18 @@
-from typing import List, NotRequired, TypedDict
+from typing import Dict
 
-JSON_SCHEMA = {
+from .observation_data import ObservationData
+from .response import Response
+
+
+class PostObserveResponse(Response):
+    def __init__(self, data: Dict):
+        super().__init__(data, _JSON_SCHEMA)
+
+    def data(self) -> ObservationData:
+        return ObservationData(**(self._data["bot"]))
+
+
+_JSON_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
@@ -305,101 +317,3 @@ JSON_SCHEMA = {
     },
     "required": ["bot"],
 }
-
-
-class Vec3(TypedDict):
-    x: float
-    y: float
-    z: float
-
-
-class BiomeInfo(TypedDict):
-    name: str
-    displayName: str | None
-    rainfall: float
-    temperature: float
-
-
-class BlockInfo(TypedDict):
-    name: str
-    displayName: str
-
-
-class EffectInfo(TypedDict):
-    id: int
-    amplifier: float
-    duration: float
-
-
-class EnchantInfo(TypedDict):
-    name: str
-    lvl: int
-
-
-class ItemInfo(TypedDict):
-    count: int
-    name: str
-    maxDurability: NotRequired[float]
-    durabilityUsed: float | None
-    enchants: List[EnchantInfo]
-
-
-class EntityInfo(TypedDict):
-    id: int
-    displayName: str | None
-    name: str | None
-    position: Vec3
-    velocity: Vec3
-    yaw: float
-    pitch: float
-    height: float
-    width: float
-    onGround: bool
-    equipment: List[ItemInfo | None]
-    health: float | None
-    food: float | None
-    foodSaturation: float | None
-    effects: List[EffectInfo]
-
-
-class ExperienceInfo(TypedDict):
-    level: int
-    points: int
-    progress: float
-
-
-class GameStateInfo(TypedDict):
-    dimension: str
-
-
-class PlayerInfo(TypedDict):
-    username: str
-
-
-class TimeInfo(TypedDict):
-    time: int
-    timeOfDay: int
-    day: int
-    isDay: bool
-    moonPhase: float
-    age: float
-
-
-class BotInfo(TypedDict):
-    username: str
-    version: str
-    entity: EntityInfo
-    entities: List[EntityInfo]
-    game: GameStateInfo
-    player: PlayerInfo
-    players: List[PlayerInfo]
-    isRaining: bool
-    experience: ExperienceInfo
-    health: float
-    food: float
-    foodSaturation: float
-    time: TimeInfo
-    quickBarSlot: int
-    isSleeping: bool
-    biome: BiomeInfo | None
-    blocksNearby: List[BlockInfo]

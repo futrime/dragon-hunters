@@ -6,28 +6,19 @@ from typing import Any, Callable, Coroutine, Dict, List, TypedDict
 
 import jsonschema
 
-from .bot_api_client import BotApiClient
-from .bot_api_response_actions import (
-    GET_JSON_SCHEMA as BOT_ACTIONS_GET_RESPONSE_DATA_JSON_SCHEMA,
-)
-from .bot_api_response_actions import (
-    POST_JSON_SCHEMA as BOT_ACTIONS_POST_RESPONSE_DATA_JSON_SCHEMA,
-)
-from .bot_api_response_actions import ActionInfo
-from .bot_api_response_events import JSON_SCHEMA as BOT_EVENTS_RESPONSE_DATA_JSON_SCHEMA
-from .bot_api_response_events import EventInfo
-from .bot_api_response_jobs import (
-    GET_JSON_SCHEMA as BOT_JOBS_GET_RESPONSE_DATA_JSON_SCHEMA,
-)
-from .bot_api_response_jobs import (
-    POST_JSON_SCHEMA as BOT_JOBS_POST_RESPONSE_DATA_JSON_SCHEMA,
-)
-from .bot_api_response_jobs import JobInfo
-from .bot_api_response_observe import (
-    JSON_SCHEMA as BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA,
-)
-from .bot_api_response_observe import BotInfo
-from .bot_api_response_status import JSON_SCHEMA as BOT_STATUS_RESPONSE_DATA_JSON_SCHEMA
+from policymaker.bot_apis.get_events_response import GetEventsResponse
+from policymaker.bot_apis.get_status_response import GetStatusResponse
+
+from .bot_apis.action_data import ActionData
+from .bot_apis.client import Client as BotApiClient
+from .bot_apis.event_data import EventData
+from .bot_apis.get_actions_response import GetActionsResponse
+from .bot_apis.get_jobs_response import GetJobsResponse
+from .bot_apis.job_data import JobData
+from .bot_apis.observation_data import ObservationData
+from .bot_apis.post_actions_response import PostActionsResponse
+from .bot_apis.post_jobs_response import PostJobsResponse
+from .bot_apis.post_observe_response import PostObserveResponse
 
 
 class ActionCreationParameter(TypedDict):
@@ -81,7 +72,7 @@ class Bot:
             }
         )
         self._event_handlers: Dict[
-            str, List[Callable[[EventInfo], Coroutine[Any, Any, None]]]
+            str, List[Callable[[EventData], Coroutine[Any, Any, None]]]
         ] = {}
         self._is_running: bool = False
         self._logger = logging.getLogger("bot")
@@ -154,11 +145,9 @@ class Bot:
             },
         )
 
-        jsonschema.validate(
-            instance=response_data, schema=BOT_ACTIONS_POST_RESPONSE_DATA_JSON_SCHEMA
-        )
+        PostActionsResponse(response_data)
 
-    async def get_actions(self) -> Dict[str, ActionInfo]:
+    async def get_actions(self) -> Dict[str, ActionData]:
         """Gets all actions.
 
         Returns:
@@ -170,38 +159,7 @@ class Bot:
 
         response_data = await self._api_client.get("/actions")
 
-        jsonschema.validate(
-            instance=response_data, schema=BOT_ACTIONS_GET_RESPONSE_DATA_JSON_SCHEMA
-        )
-
-        # No duplicate names
-        assert len({action["name"] for action in response_data["items"]}) == len(
-            response_data["items"]
-        )
-
-        # No duplicate parameter names of each action
-        for action in response_data["items"]:
-            assert len(
-                {parameter["name"] for parameter in action["parameters"]}
-            ) == len(action["parameters"])
-
-        return {
-            action["name"]: ActionInfo(
-                {
-                    "name": action["name"],
-                    "description": action["description"],
-                    "parameters": {
-                        parameter["name"]: {
-                            "name": parameter["name"],
-                            "description": parameter["description"],
-                            "type": parameter["type"],
-                        }
-                        for parameter in action["parameters"]
-                    },
-                }
-            )
-            for action in response_data["items"]
-        }
+        return GetActionsResponse(response_data).data()
 
     async def create_job(self, action: str, args: Dict[str, Any]) -> str:
         """Creates a job.
@@ -231,13 +189,11 @@ class Bot:
             },
         )
 
-        jsonschema.validate(
-            instance=response_data, schema=BOT_JOBS_POST_RESPONSE_DATA_JSON_SCHEMA
-        )
+        PostJobsResponse(response_data)
 
         return response_data["id"]
 
-    async def get_jobs(self) -> Dict[str, JobInfo]:
+    async def get_jobs(self) -> Dict[str, JobData]:
         """Gets all jobs.
 
         Returns:
@@ -249,31 +205,7 @@ class Bot:
 
         response_data = await self._api_client.get("/jobs")
 
-        jsonschema.validate(
-            instance=response_data, schema=BOT_JOBS_GET_RESPONSE_DATA_JSON_SCHEMA
-        )
-
-        # No duplicate IDs
-        assert len({job["id"] for job in response_data["items"]}) == len(
-            response_data["items"]
-        )
-
-        # No duplicate argument name of each job
-        for job in response_data["items"]:
-            assert len({arg["name"] for arg in job["args"]}) == len(job["args"])
-
-        return {
-            job["id"]: JobInfo(
-                {
-                    "id": job["id"],
-                    "action": job["action"],
-                    "args": {arg["name"]: arg["value"] for arg in job["args"]},
-                    "state": job["state"],
-                    "message": job["message"],
-                }
-            )
-            for job in response_data["items"]
-        }
+        return GetJobsResponse(response_data).data()
 
     async def start_job(self, job: str):
         """Starts a job.
@@ -323,7 +255,7 @@ class Bot:
 
         await self._api_client.post(f"/jobs/{job}/cancel", {})
 
-    async def observe(self) -> BotInfo:
+    async def observe(self) -> ObservationData:
         """Observes the world
 
         Returns:
@@ -335,15 +267,9 @@ class Bot:
 
         response_data = await self._api_client.post("/observe", {})
 
-        jsonschema.validate(
-            instance=response_data, schema=BOT_OBSERVE_RESPONSE_DATA_JSON_SCHEMA
-        )
+        return PostObserveResponse(response_data).data()
 
-        response = BotInfo(response_data["bot"])
-
-        return response
-
-    def on_event(self, event: str, handler: Callable[[EventInfo], Coroutine]):
+    def on_event(self, event: str, handler: Callable[[EventData], Coroutine]):
         """Registers an event handler.
 
         Args:
@@ -356,7 +282,7 @@ class Bot:
 
         self._event_handlers[event].append(handler)
 
-    def off_event(self, event: str, handler: Callable[[EventInfo], Coroutine]):
+    def off_event(self, event: str, handler: Callable[[EventData], Coroutine]):
         """Unregisters an event handler.
 
         Args:
@@ -384,42 +310,26 @@ class Bot:
                     },
                 )
 
+                response = GetEventsResponse(response_data)
+
+                # Invoke the events.
+                for event in response.data().values():
+                    # Allow other tasks to run.
+                    await asyncio.sleep(0)
+
+                    # Update the last updated time if the event is newer.
+                    updated = datetime.fromisoformat(event["updated"])
+                    if updated > last_updated:
+                        last_updated = updated
+
+                    # Invoke the event handler.
+                    event_handlers = self._event_handlers.get(event["name"], [])
+                    for event_handler in event_handlers:
+                        await event_handler(event)
+
             except Exception as e:
                 self._logger.error(f"Failed to update events: {e}")
                 continue
-
-            try:
-                jsonschema.validate(
-                    instance=response_data, schema=BOT_EVENTS_RESPONSE_DATA_JSON_SCHEMA
-                )
-
-            except jsonschema.ValidationError as e:
-                raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
-
-            # Invoke the events.
-            for event in response_data["items"]:
-                # Allow other tasks to run.
-                await asyncio.sleep(0)
-
-                # Update the last updated time if the event is newer.
-                updated = datetime.fromisoformat(event["updated"])
-                if updated > last_updated:
-                    last_updated = updated
-
-                event_info = EventInfo(
-                    {
-                        "id": event["id"],
-                        "name": event["name"],
-                        "description": event["description"],
-                        "args": {arg["name"]: arg["value"] for arg in event["args"]},
-                        "updated": event["updated"],
-                    }
-                )
-
-                # Invoke the event handler.
-                event_handlers = self._event_handlers.get(event["name"], [])
-                for event_handler in event_handlers:
-                    await event_handler(event_info)
 
     async def _update_status(self):
         while True:
@@ -428,14 +338,10 @@ class Bot:
             try:
                 response_data = await self._api_client.get("/status")
 
+                GetStatusResponse(response_data)
+
+                # Nothing to do currently.
+
             except Exception as e:
                 self._logger.error(f"Failed to update status: {e}")
                 continue
-
-            try:
-                jsonschema.validate(
-                    instance=response_data, schema=BOT_STATUS_RESPONSE_DATA_JSON_SCHEMA
-                )
-
-            except jsonschema.ValidationError as e:
-                raise jsonschema.ValidationError(f"invalid response from bot API: {e}")

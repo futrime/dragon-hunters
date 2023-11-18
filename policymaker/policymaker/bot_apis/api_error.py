@@ -1,4 +1,4 @@
-class BotApiError(Exception):
+class ApiError(Exception):
     """An error from the bot API."""
 
     def __init__(self, message: str):

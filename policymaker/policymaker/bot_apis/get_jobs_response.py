@@ -1,6 +1,29 @@
-from typing import Any, Dict, TypedDict
+from typing import Dict
 
-JOB_JSON_SCHEMA = {
+from .job_data import JobData
+from .response import Response
+
+
+class GetJobsResponse(Response):
+    def __init__(self, data: Dict):
+        super().__init__(data, _JSON_SCHEMA)
+
+    def data(self) -> Dict[str, JobData]:
+        return {
+            job["id"]: JobData(
+                {
+                    "id": job["id"],
+                    "action": job["action"],
+                    "args": {arg["name"]: arg["value"] for arg in job["args"]},
+                    "state": job["state"],
+                    "message": job["message"],
+                }
+            )
+            for job in self._data["items"]
+        }
+
+
+_JOB_JSON_SCHEMA = {
     "type": "object",
     "properties": {
         "id": {
@@ -32,23 +55,13 @@ JOB_JSON_SCHEMA = {
     "required": ["id", "action", "args", "state", "message"],
 }
 
-POST_JSON_SCHEMA = JOB_JSON_SCHEMA
-
-GET_JSON_SCHEMA = {
+_JSON_SCHEMA = {
     "type": "object",
     "properties": {
         "items": {
             "type": "array",
-            "items": JOB_JSON_SCHEMA,
+            "items": _JOB_JSON_SCHEMA,
         },
     },
     "required": ["items"],
 }
-
-
-class JobInfo(TypedDict):
-    id: str
-    action: str
-    args: Dict[str, Any]
-    state: str
-    message: str

@@ -4,7 +4,7 @@ from typing import Any, Dict, TypedDict
 import aiohttp
 import jsonschema
 
-from .bot_api_error import BotApiError
+from .api_error import ApiError
 
 _API_VERSION = "0.0.0"
 
@@ -55,7 +55,7 @@ _GENERAL_SCHEMA = {
 }
 
 
-class BotApiClientOptions(TypedDict):
+class ClientOptions(TypedDict):
     """Options for the bot API client.
 
     Attributes:
@@ -67,17 +67,17 @@ class BotApiClientOptions(TypedDict):
     port: int
 
 
-class BotApiClient:
+class Client:
     """A client for the bot API."""
 
-    def __init__(self, options: BotApiClientOptions):
+    def __init__(self, options: ClientOptions):
         """Initialize a bot API client.
 
         Args:
             options: The options for the bot API client.
         """
 
-        self._options: BotApiClientOptions = options
+        self._options: ClientOptions = options
 
     async def get(self, path: str, queries: Dict[str, str] = {}) -> Dict[str, Any]:
         """Gets a resource from the bot API.
@@ -116,11 +116,9 @@ class BotApiClient:
         except jsonschema.ValidationError as e:
             raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
 
-        # If the API returned an error, raise a BotApiError.
+        # If the API returned an error, raise an ApiError.
         if "error" in response_data:
-            raise BotApiError(
-                f"error from bot API: {response_data['error']['message']}"
-            )
+            raise ApiError(f"error from bot API: {response_data['error']['message']}")
         else:
             return response_data["data"]
 
@@ -157,13 +155,12 @@ class BotApiClient:
         # Validate the response format.
         try:
             jsonschema.validate(instance=response_data, schema=_GENERAL_SCHEMA)
+
         except jsonschema.ValidationError as e:
             raise jsonschema.ValidationError(f"invalid response from bot API: {e}")
 
-        # If the API returned an error, raise a BotApiError.
+        # If the API returned an error, raise an ApiError.
         if "error" in response_data:
-            raise BotApiError(
-                f"error from bot API: {response_data['error']['message']}"
-            )
+            raise ApiError(f"error from bot API: {response_data['error']['message']}")
         else:
             return response_data["data"]
