@@ -76,11 +76,12 @@ export class CraftItemActionInstance extends ActionInstance {
   }
 
   override async startRun(): Promise<void> {
-    this.runCraftItem();
+    setImmediate(() => {
+      this.runCraftingItem();
+    });
   }
 
-  private async runCraftItem(): Promise<void> {
-
+  private async runCraftingItem(): Promise<void> {
     const craftingTable: Block | null = this.bot.mineflayerBot.blockAt(
       new Vec3(this.craftingTableX, this.craftingTableY, this.craftingTableZ)
     );
