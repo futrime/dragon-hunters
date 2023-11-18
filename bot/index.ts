@@ -15,6 +15,7 @@ import { CraftItemAction } from "./lib/actions/craft_item_action.js";
 import { PlaceBlockAction } from "./lib/actions/place_block_action.js";
 import { FurnaceAction } from "./lib/actions/furnace_action.js";
 import { TakeItemFromFurnaceAction } from "./lib/actions/take_item_from_furnace_action.js";
+import { KillMobAction } from "./lib/actions/kill_mob_action.js";
 
 import { router as routerBotsActions } from "./routes/bots/actions.js";
 import { router as routerBotsJobs } from "./routes/bots/jobs.js";
@@ -173,4 +174,5 @@ function setupPredefinedActions(bot: Bot) {
   bot.addAction(new PlaceBlockAction());
   bot.addAction(new FurnaceAction());
   bot.addAction(new TakeItemFromFurnaceAction());
+  bot.addAction(new KillMobAction());
 }
