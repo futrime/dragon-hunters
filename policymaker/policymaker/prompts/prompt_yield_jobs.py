@@ -1,6 +1,22 @@
-from typing import Any, Dict, TypedDict
+import json
+from typing import Any, Dict, List, TypedDict
+
+import jsonschema
 
 from .prompt import Prompt
+
+
+class AnswerItem(TypedDict):
+    """Item in the answer"""
+
+    action: str
+    args: Dict[str, Any]
+
+
+class Answer(TypedDict):
+    """Answer to the prompt"""
+
+    items: List[AnswerItem]
 
 
 class PromptYieldJobs(Prompt):
@@ -15,14 +31,42 @@ You can use the information to make decisions.
 </information>
 """
 
-    async def generate(self, **kwargs) -> str:
-        return PromptYieldJobs.PROMPT_TEMPLATE.format(game_info=kwargs["game_info"])
+    def generate(self, game_info: str) -> str:
+        return PromptYieldJobs.PROMPT_TEMPLATE.format(game_info=game_info)
 
-    async def parse_answer(self, answer: str) -> TypedDict:
-        return Answer()
+    def parse_answer(self, answer: str) -> Answer:
+        # Try to parse answer as JSON.
+        try:
+            data = json.loads(answer)
+
+        except json.JSONDecodeError:
+            raise ValueError("failed to parse answer as JSON")
+
+        # Validate the response format.
+        try:
+            jsonschema.validate(instance=data, schema=_JSON_SCHEMA)
+
+        except jsonschema.ValidationError as e:
+            raise jsonschema.ValidationError(f"invalid answer format: {e}")
+
+        return Answer(
+            {
+                "items": [
+                    AnswerItem({"action": item["action"], "args": item["args"]})
+                    for item in data
+                ]
+            }
+        )
 
 
-class Answer(TypedDict):
-    """Answer to the prompt"""
-
-    pass
+_JSON_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "action": {"type": "string"},
+            "args": {"type": "object"},
+        },
+        "required": ["action", "args"],
+    },
+}

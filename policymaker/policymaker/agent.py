@@ -1,6 +1,9 @@
 import asyncio
 import logging
-from typing import List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
+from uu import Error
+
+from policymaker.bot_apis.observation_data import ObservationData
 
 from .bot import Bot
 from .models.gpt35turbo_wrapper import GPT35TurboWrapper
@@ -27,6 +30,10 @@ class Agent:
         self._model = GPT35TurboWrapper(options["openai_api_key"])
         self._tasks: List[asyncio.Task] = []
 
+        # Logic related stuff
+        self._observation_data: Optional[ObservationData] = None
+        self._prompt_yield_jobs = PromptYieldJobs()
+
     async def start(self):
         """Starts the agent."""
 
@@ -50,20 +57,54 @@ class Agent:
 
         self._is_running = False
 
-    async def _run(self):
+    def _generate_prompt(self) -> str:
+        if self._observation_data is None:
+            raise RuntimeError("observation data is not available")
+
+        # TODO: Generate the prompt.
+
+        return self._prompt_yield_jobs.generate(
+            game_info=str(self._observation_data["blocksNearby"])
+        )
+
+    async def _perform_action(self, action: str, args: Dict[str, Any]):
+        job_id = await self._bot.create_job(action, args)
+
+        await self._bot.start_job(job_id)
+
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0)
 
-            game_info = await self._bot.observe()
+            job_data = await self._bot.get_jobs()
 
-            self._logger.info("game info")
+            for job_id in job_data:
+                job = job_data[job_id]
+                if job["id"] != job_id:
+                    continue
 
-            prompt = await PromptYieldJobs().generate(
-                game_info=str(game_info["blocksNearby"])
-            )
+                if job["state"] == "CANCELED" or job["state"] == "SUCCEEDED":
+                    break
 
-            self._logger.info(prompt)
+                elif job["state"] == "FAILED":
+                    raise RuntimeError(f"job {job_id} failed: {job['message']}")
 
-            answer = await self._model.ask(prompt)
+    async def _run(self):
+        prompt_yield_jobs = PromptYieldJobs()
 
-            self._logger.info(answer)
+        while True:
+            try:
+                await asyncio.sleep(1)
+
+                self._observation_data = await self._bot.observe()
+
+                prompt = self._generate_prompt()
+
+                # Ask the model for the answer.
+                ans_str = await self._model.ask(prompt)
+                ans = prompt_yield_jobs.parse_answer(ans_str)
+
+                for item in ans["items"]:
+                    await self._perform_action(item["action"], item["args"])
+
+            except Error as e:
+                self._logger.error(f"an error occurred while running the agent: {e}")
