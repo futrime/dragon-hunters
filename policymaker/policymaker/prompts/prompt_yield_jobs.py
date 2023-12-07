@@ -25,10 +25,30 @@ class PromptYieldJobs(Prompt):
     PROMPT_TEMPLATE = """
 You are a senior Minecraft player. Now you are playing Minecraft controlling a player. \
 The observed environment and player information is presented below. \
-You can use the information to make decisions. The answer
+You can use the information to make decisions. You should also follow the JSON schema.
 <information>
 {game_info}
 </information>
+<schema>
+{{
+    "type": "array",
+    "items": {{
+        "type": "object",
+        "properties": {{
+            "action": {{"type": "string"}},
+            "args": {{"type": "object"}},
+        }},
+        "required": ["action", "args"],
+    }},
+}}
+</schema>
+Example answer:
+'''
+[
+    {{"action": "ExploreUntil", "args": {{"x": 1, "y": 0, "z": 0}}}},
+    {{"action": "ExploreUntil", "args": {{"x": 0, "y": 0, "z": 1}}}}
+]
+'''
 """
 
     def generate(self, game_info: str) -> str:

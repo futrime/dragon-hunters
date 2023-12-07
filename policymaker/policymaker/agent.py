@@ -100,6 +100,9 @@ class Agent:
 
                 # Ask the model for the answer.
                 ans_str = await self._model.ask(prompt)
+
+                self._logger.info(f"{ans_str}")
+
                 ans = prompt_yield_jobs.parse_answer(ans_str)
 
                 for item in ans["items"]:
