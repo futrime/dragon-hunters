@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional, TypedDict
-from uu import Error
 
 from policymaker.bot_apis.observation_data import ObservationData
 
@@ -106,5 +105,5 @@ class Agent:
                 for item in ans["items"]:
                     await self._perform_action(item["action"], item["args"])
 
-            except Error as e:
+            except Exception as e:
                 self._logger.error(f"an error occurred while running the agent: {e}")

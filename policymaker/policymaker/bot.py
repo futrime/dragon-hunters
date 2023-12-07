@@ -52,9 +52,9 @@ class BotOptions(TypedDict):
 class Bot:
     """A bot that can be run."""
 
-    BOT_NOT_RUNNING_ERROR_MESSAGE: str = "bot is not running"
-    UPDAVE_EVENTS_INTERVAL: float = 0.1
-    UPDATE_STATUS_INTERVAL: float = 0.1
+    _BOT_NOT_RUNNING_ERROR_MESSAGE: str = "bot is not running"
+    _UPDAVE_EVENTS_INTERVAL: float = 0.1
+    _UPDATE_STATUS_INTERVAL: float = 0.1
 
     def __init__(self, options: BotOptions):
         """Initialize a bot.
@@ -95,7 +95,7 @@ class Bot:
         """Stops the bot."""
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         for task in self._tasks:
             task.cancel()
@@ -121,7 +121,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         # Check duplicate parameter names
         if len({parameter["name"] for parameter in parameters}) != len(parameters):
@@ -155,7 +155,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.get("/actions")
 
@@ -173,7 +173,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.post(
             "/jobs",
@@ -201,7 +201,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.get("/jobs")
 
@@ -215,7 +215,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         await self._api_client.post(f"/jobs/{job}/start", {})
 
@@ -227,7 +227,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         await self._api_client.post(f"/jobs/{job}/pause", {})
 
@@ -239,7 +239,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         await self._api_client.post(f"/jobs/{job}/resume", {})
 
@@ -251,7 +251,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         await self._api_client.post(f"/jobs/{job}/cancel", {})
 
@@ -263,7 +263,7 @@ class Bot:
         """
 
         if not self._is_running:
-            raise RuntimeError(Bot.BOT_NOT_RUNNING_ERROR_MESSAGE)
+            raise RuntimeError(Bot._BOT_NOT_RUNNING_ERROR_MESSAGE)
 
         response_data = await self._api_client.post("/observe", {})
 
@@ -300,7 +300,7 @@ class Bot:
         last_updated: datetime = datetime.now()
 
         while True:
-            await asyncio.sleep(Bot.UPDAVE_EVENTS_INTERVAL)
+            await asyncio.sleep(Bot._UPDAVE_EVENTS_INTERVAL)
 
             try:
                 response_data = await self._api_client.get(
@@ -329,11 +329,10 @@ class Bot:
 
             except Exception as e:
                 self._logger.error(f"Failed to update events: {e}")
-                continue
 
     async def _update_status(self):
         while True:
-            await asyncio.sleep(Bot.UPDATE_STATUS_INTERVAL)
+            await asyncio.sleep(Bot._UPDATE_STATUS_INTERVAL)
 
             try:
                 response_data = await self._api_client.get("/status")
@@ -344,4 +343,3 @@ class Bot:
 
             except Exception as e:
                 self._logger.error(f"Failed to update status: {e}")
-                continue

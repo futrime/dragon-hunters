@@ -25,7 +25,7 @@ class PromptYieldJobs(Prompt):
     PROMPT_TEMPLATE = """
 You are a senior Minecraft player. Now you are playing Minecraft controlling a player. \
 The observed environment and player information is presented below. \
-You can use the information to make decisions.
+You can use the information to make decisions. The answer
 <information>
 {game_info}
 </information>
