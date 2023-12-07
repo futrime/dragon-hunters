@@ -1,29 +1,29 @@
-import assert from 'assert';
-import pathfinderModule from 'mineflayer-pathfinder';
+import assert from "assert";
+import pathfinderModule from "mineflayer-pathfinder";
 
-import {Arg} from '../arg.js';
-import {Bot} from '../bot.js';
-import {doArgArrayMatchParameterArray, Parameter} from '../parameter.js';
+import { Arg } from "../arg.js";
+import { Bot } from "../bot.js";
+import { doArgArrayMatchParameterArray, Parameter } from "../parameter.js";
 
-import {ActionInstance} from './action_instance.js';
+import { ActionInstance } from "./action_instance.js";
 
-const ACTION_NAME = 'GoTo';
+const ACTION_NAME = "GoTo";
 
 const PARAMETERS: ReadonlyArray<Parameter> = [
   {
-    name: 'x',
-    description: 'X coordinate',
-    type: 'number',
+    name: "x",
+    description: "X coordinate",
+    type: "number",
   },
   {
-    name: 'y',
-    description: 'Y coordinate',
-    type: 'number',
+    name: "y",
+    description: "Y coordinate",
+    type: "number",
   },
   {
-    name: 'z',
-    description: 'Z coordinate',
-    type: 'number',
+    name: "z",
+    description: "Z coordinate",
+    type: "number",
   },
 ];
 
@@ -39,12 +39,12 @@ export class GoToActionInstance extends ActionInstance {
     super(id, ACTION_NAME, args, bot);
 
     if (doArgArrayMatchParameterArray(args, PARAMETERS) === false) {
-      throw new Error('args do not match parameters');
+      throw new Error("args do not match parameters");
     }
 
-    this.x = this.args['x'].value as number;
-    this.y = this.args['y'].value as number;
-    this.z = this.args['z'].value as number;
+    this.x = this.args["x"].value as number;
+    this.y = this.args["y"].value as number;
+    this.z = this.args["z"].value as number;
   }
 
   override get canPause(): boolean {
@@ -73,23 +73,23 @@ export class GoToActionInstance extends ActionInstance {
     return this.succeed();
   }
 
-  private async onPathUpdate(result: {status: string}): Promise<void> {
-    if (result.status !== 'noPath' && result.status !== 'timeout') {
+  private async onPathUpdate(result: { status: string }): Promise<void> {
+    if (result.status !== "noPath" && result.status !== "timeout") {
       return;
     }
 
     let reason: string;
     switch (result.status) {
-      case 'noPath':
-        reason = 'cannot find a path to the goal';
+      case "noPath":
+        reason = "cannot find a path to the goal";
         break;
 
-      case 'timeout':
-        reason = 'take too long to find a path to the goal';
+      case "timeout":
+        reason = "take too long to find a path to the goal";
         break;
 
       default:
-        assert.fail('unreachable');
+        assert.fail("unreachable");
     }
 
     await this.stopPathfinding();
@@ -97,28 +97,27 @@ export class GoToActionInstance extends ActionInstance {
     return this.fail(reason);
   }
 
-
   private async startPathfinding(): Promise<void> {
-    if (this.onGoalReachedBound !== undefined ||
-        this.onPathUpdateBound !== undefined) {
-      throw new Error('pathfinding already started');
-    }
+    // if (this.onGoalReachedBound !== undefined ||
+    //     this.onPathUpdateBound !== undefined) {
+    //   throw new Error('pathfinding already started');
+    // }
 
     const goal = new pathfinderModule.goals.GoalBlock(this.x, this.y, this.z);
     this.bot.mineflayerBot.pathfinder.setGoal(goal);
 
-    this.bot.mineflayerBot.on('goal_reached', this.onGoalReachedBound);
-    this.bot.mineflayerBot.on('path_update', this.onPathUpdateBound);
+    this.bot.mineflayerBot.on("goal_reached", this.onGoalReachedBound);
+    this.bot.mineflayerBot.on("path_update", this.onPathUpdateBound);
   }
 
   private async stopPathfinding(): Promise<void> {
-    if (this.onGoalReachedBound === undefined ||
-        this.onPathUpdateBound === undefined) {
-      throw new Error('pathfinding not started');
-    }
+    // if (this.onGoalReachedBound === undefined ||
+    //     this.onPathUpdateBound === undefined) {
+    //   throw new Error('pathfinding not started');
+    // }
 
-    this.bot.mineflayerBot.off('goal_reached', this.onGoalReachedBound);
-    this.bot.mineflayerBot.off('path_update', this.onPathUpdateBound);
+    this.bot.mineflayerBot.off("goal_reached", this.onGoalReachedBound);
+    this.bot.mineflayerBot.off("path_update", this.onPathUpdateBound);
 
     this.bot.mineflayerBot.pathfinder.setGoal(null);
   }

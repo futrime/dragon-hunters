@@ -1,27 +1,35 @@
-import assert from 'assert';
-import pWaitFor from 'p-wait-for';
+import assert from "assert";
+import pWaitFor from "p-wait-for";
 
-import {Arg} from '../arg.js';
-import {Bot} from '../bot.js';
-import {doArgArrayMatchParameterArray, isParameterArrayDuplicate, Parameter} from '../parameter.js';
+import { Arg } from "../arg.js";
+import { Bot } from "../bot.js";
+import {
+  doArgArrayMatchParameterArray,
+  isParameterArrayDuplicate,
+  Parameter,
+} from "../parameter.js";
 
-import {ActionInstance} from './action_instance.js';
-import {ActionInstanceState} from './action_instance_state.js';
+import { ActionInstance } from "./action_instance.js";
+import { ActionInstanceState } from "./action_instance_state.js";
 
 export abstract class CompositeActionInstance extends ActionInstance {
   private currentActionInstance?: ActionInstance = undefined;
 
   constructor(
-      id: string, actionName: string, args: ReadonlyArray<Arg>, bot: Bot,
-      parameters: ReadonlyArray<Parameter>) {
+    id: string,
+    actionName: string,
+    args: ReadonlyArray<Arg>,
+    bot: Bot,
+    parameters: ReadonlyArray<Parameter>
+  ) {
     super(id, actionName, args, bot);
 
-    if (isParameterArrayDuplicate(parameters) === false) {
-      throw new Error('parameters duplicate');
+    if (isParameterArrayDuplicate(parameters) === true) {
+      throw new Error("parameters duplicate");
     }
 
     if (doArgArrayMatchParameterArray(args, parameters) === false) {
-      throw new Error('args do not match parameters');
+      throw new Error("args do not match parameters");
     }
   }
 
@@ -40,18 +48,22 @@ export abstract class CompositeActionInstance extends ActionInstance {
   protected override async cancelRun(): Promise<void> {
     // this.currentActionInstance should never be undefined
     assert.notStrictEqual(
-        this.currentActionInstance, undefined,
-        'currentActionInstance should not be undefined');
+      this.currentActionInstance,
+      undefined,
+      "currentActionInstance should not be undefined"
+    );
 
     // Wait till RUNNING if READY
     if (this.currentActionInstance!.state === ActionInstanceState.READY) {
       await pWaitFor(
-          () => this.currentActionInstance!.state ===
-              ActionInstanceState.RUNNING);
+        () => this.currentActionInstance!.state === ActionInstanceState.RUNNING
+      );
     }
 
-    if (this.currentActionInstance!.state === ActionInstanceState.RUNNING ||
-        this.currentActionInstance!.state === ActionInstanceState.PAUSED) {
+    if (
+      this.currentActionInstance!.state === ActionInstanceState.RUNNING ||
+      this.currentActionInstance!.state === ActionInstanceState.PAUSED
+    ) {
       await this.currentActionInstance!.cancel();
     }
   }
@@ -59,8 +71,10 @@ export abstract class CompositeActionInstance extends ActionInstance {
   protected override async pauseRun(): Promise<void> {
     // this.currentActionInstance should never be undefined
     assert.notStrictEqual(
-        this.currentActionInstance, undefined,
-        'currentActionInstance should not be undefined');
+      this.currentActionInstance,
+      undefined,
+      "currentActionInstance should not be undefined"
+    );
 
     await pWaitFor(() => this.currentActionInstance!.canPause === true);
 
@@ -70,13 +84,17 @@ export abstract class CompositeActionInstance extends ActionInstance {
   protected override async resumeRun(): Promise<void> {
     // this.currentActionInstance should never be undefined
     assert.notStrictEqual(
-        this.currentActionInstance, undefined,
-        'currentActionInstance should not be undefined');
+      this.currentActionInstance,
+      undefined,
+      "currentActionInstance should not be undefined"
+    );
 
     // Paused action instance can pause.
     assert.strictEqual(
-        this.currentActionInstance!.canPause, true,
-        'paused currentActionInstance should be able to pause');
+      this.currentActionInstance!.canPause,
+      true,
+      "paused currentActionInstance should be able to pause"
+    );
 
     await this.currentActionInstance!.resume();
   }
@@ -93,9 +111,11 @@ export abstract class CompositeActionInstance extends ActionInstance {
       throw error;
     }
 
-    if (this.currentActionInstance !== undefined &&
-        (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
-         this.currentActionInstance.state === ActionInstanceState.PAUSED)) {
+    if (
+      this.currentActionInstance !== undefined &&
+      (this.currentActionInstance.state === ActionInstanceState.RUNNING ||
+        this.currentActionInstance.state === ActionInstanceState.PAUSED)
+    ) {
       await this.currentActionInstance.cancel().catch(() => {});
     }
 
@@ -107,8 +127,10 @@ export abstract class CompositeActionInstance extends ActionInstance {
 
     for (const actionInstance of this.generateActionInstance()) {
       assert.strictEqual(
-          this.currentActionInstance, undefined,
-          'currentActionInstance should be undefined');
+        this.currentActionInstance,
+        undefined,
+        "currentActionInstance should be undefined"
+      );
 
       this.currentActionInstance = actionInstance;
 
@@ -124,15 +146,15 @@ export abstract class CompositeActionInstance extends ActionInstance {
 
   private async waitTillActionInstanceEnd(actionInstance: ActionInstance) {
     return new Promise<void>((resolve) => {
-      actionInstance.eventEmitter.once('cancel', () => {
+      actionInstance.eventEmitter.once("cancel", () => {
         return resolve();
       });
 
-      actionInstance.eventEmitter.once('succeed', () => {
+      actionInstance.eventEmitter.once("succeed", () => {
         return resolve();
       });
 
-      actionInstance.eventEmitter.once('fail', (_, reason: string) => {
+      actionInstance.eventEmitter.once("fail", (_, reason: string) => {
         this.fail(reason);
         return resolve();
       });
