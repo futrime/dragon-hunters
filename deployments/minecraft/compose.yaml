@@ -1,0 +1,10 @@
+services:
+  minecraft_server:
+    environment:
+      EULA: TRUE
+      ONLINE_MODE: FALSE
+      VERSION: 1.20.1
+    image: itzg/minecraft-server
+    ports:
+      - 25565:25565
+    restart: always

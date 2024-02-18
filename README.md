@@ -6,16 +6,10 @@ Hunt the Ender Dragon with LLM
 
 ### With Docker
 
-If you have Docker and Docker Compose installed, you can run the following command to start the whole project:
+If you have Docker and Docker Compose installed, you can simply go to subdirectories in `/deployments` and run the following command to start the project:
 
 ```bash
 docker compose up -d
-```
-
-If the Docker Compose is standalone, you can run the following command to start the whole project:
-
-```bash
-docker-compose up -d
 ```
 
 ### Manually
