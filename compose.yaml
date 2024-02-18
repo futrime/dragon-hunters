@@ -23,8 +23,6 @@ services:
     ports:
       - 25565:25565
     restart: always
-    volumes:
-      - mcserver:/data
 
   registry:
     build: registry
